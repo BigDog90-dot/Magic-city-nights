@@ -484,7 +484,7 @@ function renderBuild(){
       ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
           <b>${esc(s.name)}</b><span class="meta">${metaLine(s)}</span></button>`).join("")
       : `<div class="empty-rail">${all.length ? (all.every(s => taken.has(s.id)) ? `Add more ${word} so this stop has its own pick.` : "Nothing here fits your filters.") : `No ${word} yet. Add some in <b>My spots</b>.`}</div>`;
-    return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail">${body}</div></div>`;
+    return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail" data-rail="${outing}-${slot.id}">${body}</div></div>`;
   }).join("");
 }
 
@@ -547,12 +547,35 @@ function renderSaved(){
   }).join("");
 }
 
+/* Re-rendering replaces buttons and rows, so remember where the viewer was and put it back:
+   page scroll, each row's sideways scroll, and which control had focus. */
+const FOCUS_KEYS = ["slot","id","lock","clear","mood","outing","qpick","editlinks","del","load","delnight"];
+function focusKey(el){
+  if (!el || el === document.body || !document.contains(el)) return null;
+  if (el.id) return "#" + CSS.escape(el.id);
+  const attrs = FOCUS_KEYS.filter(k => el.dataset && el.dataset[k] !== undefined)
+    .map(k => `[data-${k.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}="${CSS.escape(el.dataset[k])}"]`).join("");
+  return attrs ? el.tagName.toLowerCase() + attrs : null;
+}
+function keepView(fn){
+  const x = window.scrollX, y = window.scrollY;
+  const rails = {};
+  document.querySelectorAll(".rail[data-rail]").forEach(r => { rails[r.dataset.rail] = r.scrollLeft; });
+  const key = focusKey(document.activeElement);
+  fn();
+  document.querySelectorAll(".rail[data-rail]").forEach(r => { if (rails[r.dataset.rail] !== undefined) r.scrollLeft = rails[r.dataset.rail]; });
+  if (key) { const el = document.querySelector(key); if (el && el !== document.activeElement) { try { el.focus({preventScroll:true}); } catch(_) { el.focus(); } } }
+  if (window.scrollX !== x || window.scrollY !== y) window.scrollTo(x, y);
+}
+
 function render(){
-  for (const t of ["build","surprise","spots"]) {
-    $("#tab-"+t).setAttribute("aria-selected", tab === t);
-    $("#view-"+t).hidden = tab !== t;
-  }
-  renderHeader(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+  keepView(() => {
+    for (const t of ["build","surprise","spots"]) {
+      $("#tab-"+t).setAttribute("aria-selected", tab === t);
+      $("#view-"+t).hidden = tab !== t;
+    }
+    renderHeader(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+  });
   remember();
 }
 
@@ -806,7 +829,7 @@ document.addEventListener("click", async e => {
   if (t.dataset.outing) { outing = t.dataset.outing; render(); return; }
   if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
   if (t.id === "grown-toggle") { grown = !grown; render(); return; }
-  if (t.dataset.editlinks !== undefined) { editing = t.dataset.editlinks || null; renderSpots(); return; }
+  if (t.dataset.editlinks !== undefined) { editing = t.dataset.editlinks || null; keepView(renderSpots); return; }
   if (t.matches(".tab")) { tab = t.id.replace("tab-",""); render(); return; }
   if (t.matches(".spot")) { const k = t.dataset.slot; P()[k] = P()[k] === t.dataset.id ? null : t.dataset.id; render(); return; }
   if (t.id === "roll") { roll(); return; }
