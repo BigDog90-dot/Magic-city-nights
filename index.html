@@ -443,7 +443,7 @@ function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-are
 function passes(s){
   const f = filters();
   if ((Number(s.price)||2) > f.budget) return false;
-  if (f.area && (s.area||"").toLowerCase() !== f.area.toLowerCase()) return false;
+  if (f.area && (s.area||"").trim().toLowerCase() !== f.area.trim().toLowerCase()) return false;
   if (f.setting && s.setting && s.setting !== "both" && s.setting !== f.setting) return false;
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
   if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
@@ -453,7 +453,12 @@ function passes(s){
 const spotById = id => spots.find(s => s.id === id);
 const takenElsewhere = slotId => new Set(Object.entries(P()).filter(([k,v]) => k !== slotId && v).map(([,v]) => v));
 
-function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1800); }
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(old => old.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  (document.querySelector("dialog[open]") || document.body).appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
 function status(msg){ const el = $("#status"); el.hidden = !msg; el.textContent = msg || ""; }
 
 /* ---------- render ---------- */
@@ -605,7 +610,8 @@ async function copyPlan(){
   catch(e) {
     const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); toast("Copied. Paste it in a text."); } catch(_) { toast("Select the plan and copy it"); }
+    let ok = false; try { ok = document.execCommand("copy"); } catch(_) {}
+    toast(ok ? "Copied. Paste it in a text." : "Couldn't copy. Use Send the invite to share it.");
     ta.remove();
   }
 }
@@ -755,7 +761,7 @@ function copyInvite(text){
     $("#invite").appendChild(ta); ta.select();
     let ok = false; try { ok = document.execCommand("copy"); } catch(_) {}
     ta.remove();
-    if (ok) done(); else { $("#inv-preview").focus(); toast("Select the preview and copy it"); }
+    if (ok) done(); else { const r = document.createRange(); r.selectNodeContents($("#inv-preview")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Copy the highlighted invite"); }
   };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
 }
@@ -783,7 +789,7 @@ function catWord(w){
 function parseBulk(text){
   const out = []; let cat = null;
   for (const raw of text.split(/\r?\n/)) {
-    const line = raw.replace(/^[\s\-•*\d.)]+/, "").trim();
+    const line = raw.replace(/^\s*(?:[-–•*]+|\d+[.)])\s+/, "").trim();
     if (!line) continue;
     const head = catWord(line);
     if (head && !line.includes("|")) { cat = head; continue; }
