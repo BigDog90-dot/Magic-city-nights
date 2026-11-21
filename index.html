@@ -72,6 +72,13 @@ button{cursor:pointer}
 .mood .lbl{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-right:2px}
 .mood button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem}
 .mood button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.cuisines{display:grid;gap:8px}
+.cuisines .lbl{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.cuisines .lbl small{font-weight:600;text-transform:none;letter-spacing:0}
+.cuisines .chips{display:flex;flex-wrap:wrap;gap:8px}
+.cuisines .chips::-webkit-scrollbar{display:none}
+.cuisines button{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem;white-space:nowrap}
+.cuisines button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .mood .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
 @media (max-width:520px){.mood .sep{display:none}.mood{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .mood button.grown[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
@@ -266,6 +273,11 @@ body.shared #headline, body.shared #subline{display:none}
     <div class="search-results" id="q-results" role="listbox" aria-label="Matching spots" hidden></div>
   </section>
 
+  <section class="cuisines" aria-label="Food type">
+    <span class="lbl">Food type <small>· pick one or more</small></span>
+    <div class="chips" id="cuisine-chips" role="group" aria-label="Food type"></div>
+  </section>
+
   <section class="filters" aria-label="Filters">
     <div class="field"><label for="f-budget">Budget</label>
       <select id="f-budget"><option value="4">Any price</option><option value="1">$ only</option><option value="2">Up to $$</option><option value="3">Up to $$$</option></select></div>
@@ -302,6 +314,8 @@ body.shared #headline, body.shared #subline{display:none}
         <div class="field full"><label for="a-name">Name</label><input id="a-name" required placeholder="Place name"></div>
         <div class="field"><label for="a-cat">Category</label>
           <select id="a-cat"><option value="food">Food</option><option value="activity">Activity</option><option value="dessert">Dessert</option><option value="bar">Bar</option><option value="lounge">Lounge</option><option value="coffee">Coffee shop</option><option value="brunch">Brunch</option></select></div>
+        <div class="field" id="a-cuisine-field"><label for="a-cuisine">Food type</label>
+          <select id="a-cuisine"><option value="">Not sure</option></select></div>
         <div class="field"><label for="a-price">Price</label>
           <select id="a-price"><option value="1">$</option><option value="2" selected>$$</option><option value="3">$$$</option><option value="4">$$$$</option></select></div>
         <div class="field"><label for="a-area">Area</label><input id="a-area" placeholder="Southside, Avondale…" list="areas-list"></div>
@@ -390,6 +404,10 @@ const CATS = {
   coffee:{label:"Coffee", plural:"Coffee shops"},
   brunch:{label:"Brunch", plural:"Brunch spots"},
 };
+const CUISINES = {
+  soul:"🍗 Soul & Southern", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
+  italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American"
+};
 const OUTINGS = {
   date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", rollText:"Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.", text:"Date night in Birmingham",
     slots:[{id:"food",label:"Food",cats:["food"]},{id:"activity",label:"Activity",cats:["activity"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
@@ -426,6 +444,7 @@ let locks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};
 let tab = "build";
 let mood = "";
 let grown = false;
+let cuisines = [];   // food types picked; empty means all food
 let editing = null;
 let db = null, dbReady = false, fresh = new Set();
 // Website mode: with no Claude database, spots and saved nights live in this browser.
@@ -439,7 +458,8 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const money = n => "$".repeat(Math.max(1, Math.min(4, Number(n)||2)));
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
-const metaLine = s => [money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const cuisineWord = s => s.category === "food" && CUISINES[s.cuisine] ? CUISINES[s.cuisine].replace(/^\S+\s/, "") : "";
+const metaLine = s => [cuisineWord(s), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -458,8 +478,9 @@ try {
   if (s.tab) tab = s.tab;
   if (s.mood === "social" || s.mood === "lowkey") mood = s.mood;
   grown = !!s.grown;
+  if (Array.isArray(s.cuisines)) cuisines = s.cuisines.filter(k => CUISINES[k]);
 } catch(e) {}
-function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown})); } catch(e) {} }
+function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines})); } catch(e) {} }
 
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
 function passes(s){
@@ -470,6 +491,8 @@ function passes(s){
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
   if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
   if (grown && !s.grown) return false;
+  // Food type only narrows restaurants; dessert, bars and the rest aren't affected.
+  if (cuisines.length && s.category === "food" && !cuisines.includes(s.cuisine)) return false;
   return true;
 }
 const spotById = id => spots.find(s => s.id === id);
@@ -487,6 +510,15 @@ function renderHeader(){
   document.querySelectorAll(".outing").forEach(b => b.setAttribute("aria-pressed", b.dataset.outing === outing));
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
+}
+
+function renderCuisines(){
+  const have = new Set(spots.filter(s => s.category === "food" && s.cuisine).map(s => s.cuisine));
+  const keys = Object.keys(CUISINES).filter(k => have.has(k) || cuisines.includes(k));
+  const row = $("#cuisine-chips"), x = row.scrollLeft;
+  row.innerHTML = `<button data-cuisine="" aria-pressed="${!cuisines.length}">All food</button>` +
+    keys.map(k => `<button data-cuisine="${k}" aria-pressed="${cuisines.includes(k)}">${CUISINES[k]}</button>`).join("");
+  row.scrollLeft = x;
 }
 
 function renderAreas(){
@@ -578,7 +610,7 @@ function render(){
     $("#tab-"+t).setAttribute("aria-selected", tab === t);
     $("#view-"+t).hidden = tab !== t;
   }
-  renderHeader(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+  renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
   remember();
 }
 
@@ -618,7 +650,7 @@ let detailId = null;
 const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’`]/g, "");
 function haystack(s){
   const c = CATS[s.category] || {};
-  return norm([s.name, s.area, c.label, c.plural, s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -881,6 +913,11 @@ document.addEventListener("click", async e => {
   if (t.dataset.outing) { outing = t.dataset.outing; render(); return; }
   if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
   if (t.id === "grown-toggle") { grown = !grown; render(); return; }
+  if (t.dataset.cuisine !== undefined) {
+    const k = t.dataset.cuisine;
+    cuisines = !k ? [] : cuisines.includes(k) ? cuisines.filter(x => x !== k) : [...cuisines, k];
+    render(); return;
+  }
   if (t.dataset.editlinks !== undefined) { editing = t.dataset.editlinks || null; renderSpots(); return; }
   if (t.matches(".tab")) { tab = t.id.replace("tab-",""); render(); return; }
   if (t.matches(".spot")) { const k = t.dataset.slot; P()[k] = P()[k] === t.dataset.id ? null : t.dataset.id; render(); return; }
@@ -931,6 +968,7 @@ $("#add-form").addEventListener("submit", async e => {
   e.preventDefault();
   const name = $("#a-name").value.trim(); if (!name) return;
   const spot = {name, category:$("#a-cat").value, price:Number($("#a-price").value), area:$("#a-area").value.trim(), setting:$("#a-setting").value, dress:$("#a-dress").value, mood:$("#a-mood").value, grown:$("#a-grown").checked, website:safeUrl($("#a-web").value.trim()), reserve:safeUrl($("#a-res").value.trim()), address:$("#a-address").value.trim(), note:$("#a-note").value.trim()};
+  if (spot.category === "food" && $("#a-cuisine").value) spot.cuisine = $("#a-cuisine").value;
   const n = await addSpots([spot]);
   if (n) { toast(`Added ${name}`); for (const id of ["#a-name","#a-address","#a-note","#a-web","#a-res"]) $(id).value = ""; $("#a-grown").checked = false; $("#a-name").focus(); }
 });
@@ -967,7 +1005,7 @@ render();
           let changed = false;
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
-            for (const k of ["website","reserve","address","area"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
           }
           // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
           // because every starter id goes on the "seen" list once it has been offered.
@@ -1003,6 +1041,10 @@ render();
   }, () => { clearTimeout(timer); status("Your spots couldn't load right now. Reopen the page in a bit."); });
   db.collection("dates").onSnapshot(snap => { nights = snap.docs.map(d => ({id:d.id, ...d.data()})); renderSaved(); }, () => {});
 })();
+
+$("#a-cuisine").innerHTML += Object.entries(CUISINES).map(([k, v]) => `<option value="${k}">${v.replace(/^\S+\s/, "")}</option>`).join("");
+const syncCuisineField = () => { $("#a-cuisine-field").hidden = $("#a-cat").value !== "food"; };
+$("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
 
 /* ---------- shared plan page ---------- */
 (async () => {
