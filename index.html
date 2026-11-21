@@ -69,6 +69,7 @@ button{cursor:pointer}
 .mood button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem}
 .mood button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .mood .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
+@media (max-width:520px){.mood .sep{display:none}.mood{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .mood button.grown[aria-pressed="true"]{background:var(--lounge);border-color:var(--lounge);color:#fff}
 .check{display:flex;gap:8px;align-items:center;font-weight:600}
 .check input{width:auto}
@@ -634,6 +635,20 @@ render();
     try { saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null"); } catch(e) {}
     if (saved && Array.isArray(saved.spots)) {
       spots = saved.spots; nights = Array.isArray(saved.nights) ? saved.nights : [];
+      // Pull new links/areas/addresses from the starter list into this phone's saved copy.
+      // Only fills blanks, so anything the person edited themselves stays as they set it.
+      try {
+        const r = await fetch("spots.json", {cache:"no-cache"});
+        if (r.ok) {
+          const fresh = new Map((await r.json()).map(x => [x.id, x]));
+          let changed = false;
+          for (const sp of spots) {
+            const f = fresh.get(sp.id); if (!f) continue;
+            for (const k of ["website","reserve","address","area"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+          }
+          if (changed) saveLocal();
+        }
+      } catch(e) {}
     } else {
       try { const r = await fetch("spots.json", {cache:"no-cache"}); if (r.ok) spots = await r.json(); } catch(e) {}
     }
