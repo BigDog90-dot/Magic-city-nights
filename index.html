@@ -11,9 +11,11 @@
 <meta name="apple-mobile-web-app-title" content="Magic City Nights">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B1426'/%3E%3Cpath d='M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z' fill='%23D4AF37'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Playfair+Display:wght@600;700&display=swap">
 <style>
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -30,6 +32,7 @@ img{max-width:100%}
   color-scheme:dark;
   --display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
   --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif:"Playfair Display", Georgia, "Times New Roman", serif;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -46,13 +49,13 @@ img{max-width:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:720px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.1}
-h1{font-size:clamp(1.9rem,6vw,2.6rem);font-weight:800;letter-spacing:-.02em}
+h1{font-family:var(--serif);font-size:clamp(1.9rem,6vw,2.6rem);font-weight:700;letter-spacing:-.01em}
 h1 em{font-style:normal;color:var(--accent)}
 h2{font-size:1.25rem;font-weight:800}
 h3{font-size:1rem;font-weight:600}
 .sub{color:var(--muted);margin:6px 0 0}
-.brand{font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg);margin-bottom:8px}
-.brand span{color:var(--accent)}
+.logo{display:flex;align-items:center;gap:.45em;width:fit-content;max-width:100%;font-family:var(--serif);font-weight:700;font-size:1.3rem;line-height:1.1;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--accent);margin-bottom:16px}
+.logo svg{flex:none;width:.95em;height:1.08em;margin-top:-.08em}
 .eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -86,6 +89,7 @@ textarea{resize:vertical;min-height:150px;font-size:.9rem}
 
 .cat{display:grid;gap:8px}
 .cat-head{display:flex;align-items:center;gap:8px}
+.cat-head h3{font-family:var(--serif);font-weight:700;font-size:1.1rem}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .cat-head .count{margin-left:auto;font-size:.8rem;color:var(--muted)}
 .rail{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
@@ -176,7 +180,7 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
 
 <div class="wrap">
   <header>
-    <div class="brand">Magic City <span>Nights</span></div>
+    <div class="logo"><svg viewBox="15 12 37 42" aria-hidden="true" focusable="false"><path d="M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z" fill="currentColor"/></svg><span>Magic City Nights</span></div>
     <h1 id="headline">Build a <em>Birmingham</em> date</h1>
     <p class="sub" id="subline">Pick your spots, or let it surprise you.</p>
   </header>
