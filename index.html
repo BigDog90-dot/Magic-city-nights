@@ -54,8 +54,8 @@ h1 em{font-style:normal;color:var(--accent)}
 h2{font-size:1.25rem;font-weight:800}
 h3{font-size:1rem;font-weight:600}
 .sub{color:var(--muted);margin:6px 0 0}
-.logo{display:flex;align-items:center;gap:.45em;width:fit-content;max-width:100%;font-family:var(--serif);font-weight:700;font-size:1.3rem;line-height:1.1;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--accent);margin-bottom:16px}
-.logo svg{flex:none;width:.95em;height:1.08em;margin-top:-.08em}
+.logo{display:flex;align-items:center;gap:.45em;width:fit-content;max-width:100%;font-family:var(--serif);font-weight:700;font-size:1.3rem;line-height:1.1;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--accent);margin-bottom:16px;text-shadow:none;filter:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-synthesis:none}
+.logo svg{flex:none;width:.95em;height:1.08em;margin-top:-.08em;filter:none}
 .eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -179,7 +179,8 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
 .lock{min-height:38px}
 .links a{display:inline-block;padding-block:4px}
 @media (max-width:520px){
-  .wrap{padding-block:14px 40px;gap:16px}
+  /* Extra top space keeps the logo below the soft blur Safari puts under the iPhone status bar */
+  .wrap{padding-block:38px 40px;gap:16px}
   .spot{width:min(68vw,200px)}
   .plan,.card{padding:16px}
   .btn{padding:12px 16px}
