@@ -173,7 +173,8 @@ dialog.invite::backdrop{background:rgb(5 10 20 / .72)}
 .choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .choice button{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 8px;font-weight:700;color:var(--fg)}
 .choice button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel);color:var(--accent)}
-.invite pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:.85rem;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+.invite .bubble-wrap{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px 12px;display:flex;justify-content:flex-end}
+.invite pre{margin:0;max-width:88%;background:#0A84FF;color:#fff;border-radius:18px 18px 4px 18px;padding:10px 14px;font:inherit;font-size:.92rem;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
 .invite .row .btn{flex:1 1 auto}
 .saved .item{grid-template-columns:1fr auto}
 
@@ -341,7 +342,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
       <button type="button" data-invite-mode="show" aria-pressed="true">Show the plan</button>
       <button type="button" data-invite-mode="surprise" aria-pressed="false">Keep it a surprise</button>
     </div>
-    <div class="field"><span class="eyebrow">Preview</span><pre id="inv-preview"></pre></div>
+    <div class="field"><span class="eyebrow">How it'll look in a text</span><div class="bubble-wrap"><pre id="inv-preview" tabindex="-1"></pre></div></div>
     <div class="row"><button type="button" class="btn primary" id="invite-send">Send</button><button type="button" class="btn ghost" id="invite-cancel">Cancel</button></div>
   </form>
 </dialog>
@@ -475,7 +476,10 @@ function renderAreas(){
 }
 
 function renderBuild(){
-  $("#view-build").innerHTML = O().slots.map(slot => {
+  const view = $("#view-build");
+  const keep = {};
+  view.querySelectorAll(".rail[data-rail]").forEach(r => { keep[r.dataset.rail] = r.scrollLeft; });
+  view.innerHTML = O().slots.map(slot => {
     const all = spots.filter(s => slot.cats.includes(s.category));
     const taken = takenElsewhere(slot.id);
     const list = all.filter(s => passes(s) && !taken.has(s.id));
@@ -484,8 +488,9 @@ function renderBuild(){
       ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
           <b>${esc(s.name)}</b><span class="meta">${metaLine(s)}</span></button>`).join("")
       : `<div class="empty-rail">${all.length ? (all.every(s => taken.has(s.id)) ? `Add more ${word} so this stop has its own pick.` : "Nothing here fits your filters.") : `No ${word} yet. Add some in <b>My spots</b>.`}</div>`;
-    return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail">${body}</div></div>`;
+    return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail" data-rail="${slot.id}">${body}</div></div>`;
   }).join("");
+  view.querySelectorAll(".rail[data-rail]").forEach(r => { if (keep[r.dataset.rail]) r.scrollLeft = keep[r.dataset.rail]; });
 }
 
 function chosenStops(){ return O().slots.map(slot => ({slot, spot: spotById(P()[slot.id])})); }
@@ -686,7 +691,34 @@ $("#spot-detail").addEventListener("click", e => { if (e.target === e.currentTar
 
 /* ---------- invite ---------- */
 const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
-const EMOJI = {food:"🍽", activity:"🎳", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
+const EMOJI = {food:"🍽️", activity:"🎟️", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
+const ACTIVITY_EMOJI = [
+  [/comedy|improv|stand.?up/i, "🎭"], [/danc|salsa|ballroom/i, "💃"], [/cook|culinary|chef/i, "👩‍🍳"],
+  [/jazz|concert|music|live band|symphony/i, "🎶"], [/movie|theat|cinema|film/i, "🎬"], [/bowl/i, "🎳"],
+  [/paint|pottery|ceramic|art class/i, "🎨"], [/museum|gallery|\bart\b/i, "🖼️"], [/arcade|game|escape/i, "🕹️"],
+  [/golf|topgolf/i, "⛳"], [/axe/i, "🪓"], [/skat/i, "⛸️"], [/zoo|garden|park|hike|trail|walk/i, "🌳"], [/spa|massage/i, "💆"]
+];
+function stopEmoji(spot){
+  if (spot.category === "activity") {
+    const text = `${spot.name} ${spot.note || ""}`;
+    const hit = ACTIVITY_EMOJI.find(([re]) => re.test(text));
+    if (hit) return hit[1];
+  }
+  return EMOJI[spot.category] || "📍";
+}
+const SECTION_TIMES = {
+  date:{food:"Evening", activity:"Evening", dessert:"Evening", lounge:"Late night"},
+  girls:{dinner:"Evening", fun:"Evening", drinks:"Late night", lounge:"Late night"},
+  bars:{bar1:"Late night", bar2:"Late night", bar3:"Late night", last:"Late night"},
+  coffee:{coffee:"Morning", do:"Morning", bite:"Morning", treat:"Morning"},
+  brunch:{brunch:"Morning", do:"Morning", after:"Morning"},
+  sun:{brunch:"Morning", morning:"Morning", food:"Evening", dessert:"Evening", evening:"Evening", close:"Late night"}
+};
+const SECTION_ICON = {"Morning":"☀️", "Evening":"🌆", "Late night":"🌙"};
+function stopLabel(slot){
+  if (slot.label === "Food") return "Dinner";
+  return slot.label.replace(/^(Morning|Evening) activity$/, "Activity");
+}
 let inviteMode = "show";
 function planDress(){
   const d = chosenStops().filter(x => x.spot).map(x => x.spot.dress);
@@ -700,19 +732,31 @@ function timeWord(v){
 }
 function inviteText(){
   const note = $("#inv-note").value.trim();
-  const ready = [timeWord($("#inv-time").value) && `Be ready by ${timeWord($("#inv-time").value)}`, dressWord($("#inv-dress").value) && `Dress: ${dressWord($("#inv-dress").value)}`].filter(Boolean).join(" · ");
-  let body;
+  const timeVal = $("#inv-time").value;
+  const readyAt = timeWord(timeVal);
+  const dress = dressWord($("#inv-dress").value);
+  const times = SECTION_TIMES[outing] || {};
+  const stops = chosenStops().filter(x => x.spot);
+  const hour = /^(\d{1,2})/.test(timeVal || "") ? Number(timeVal.slice(0, 2)) : null;
+  const startsMorning = stops.length && times[stops[0].slot.id] === "Morning";
+  const when = (hour !== null ? hour < 12 : startsMorning) ? "day" : "night";
+  const details = [readyAt && `⏰ Be ready by ${readyAt}`, dress && `👗 Dress: ${dress[0].toUpperCase() + dress.slice(1)}`].filter(Boolean).join("\n");
+  const parts = [note];
   if (inviteMode === "show") {
-    const stops = chosenStops().filter(x => x.spot).flatMap(({slot, spot}) => {
-      const label = slot.label === "Food" ? "Dinner" : slot.label;
-      const web = safeUrl(spot.website);
-      return [`${EMOJI[spot.category] || "📍"} ${label}: ${spot.name}`, ...(web ? [web] : [])];
-    });
-    body = ["Here's our night ✨", ...stops, ready];
+    const groups = [];
+    for (const {slot, spot} of stops) {
+      const sec = times[slot.id] || "Evening";
+      if (!groups.length || groups[groups.length - 1].sec !== sec) groups.push({sec, lines: []});
+      groups[groups.length - 1].lines.push(`${stopEmoji(spot)} ${stopLabel(slot)} — ${spot.name}`);
+    }
+    parts.push(`Here's our ${when} ✨`);
+    if (groups.length > 1) groups.forEach(g => parts.push(`${SECTION_ICON[g.sec]} ${g.sec.toUpperCase()}\n${g.lines.join("\n")}`));
+    else if (groups.length) parts.push(groups[0].lines.join("\n"));
   } else {
-    body = ["I've got our night planned 😉", ready, "The rest is a surprise."];
+    parts.push(`I've got our ${when} planned 😉\nThe rest is a surprise.`);
   }
-  return [note, body.filter(Boolean).join("\n"), `Planned with Magic City Nights 🌙 ${SITE_URL}`].filter(Boolean).join("\n\n");
+  parts.push(details, `Planned with Magic City Nights 🌙\n${SITE_URL}`);
+  return parts.filter(Boolean).join("\n\n");
 }
 function renderInvite(){
   document.querySelectorAll("[data-invite-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.inviteMode === inviteMode));
