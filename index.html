@@ -405,7 +405,7 @@ const CATS = {
   brunch:{label:"Brunch", plural:"Brunch spots"},
 };
 const CUISINES = {
-  soul:"🍗 Soul & Southern", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
+  soul:"🍗 Soul & Southern", bbq:"🔥 BBQ", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
   italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American"
 };
 const OUTINGS = {
@@ -650,7 +650,7 @@ let detailId = null;
 const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’`]/g, "");
 function haystack(s){
   const c = CATS[s.category] || {};
-  return norm([s.name, s.area, c.label, c.plural, cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1006,6 +1006,7 @@ render();
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
             for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
           }
           // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
           // because every starter id goes on the "seen" list once it has been offered.
