@@ -1,0 +1,602 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Magic City Nights</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Layout: one phone-first column. Outing switcher, filters, three tabs (Build, Surprise, My Spots), plan card under the picker. */
+:root{
+  --bg:#F6F3F8; --surface:#FFFFFF; --surface-2:#EEE8F3; --fg:#1F1830; --muted:#6A6080; --line:#DDD4E6;
+  --accent:#C2336B; --accent-fg:#FFFFFF; --steel:#2F5D73; --steel-soft:#DCEAF0;
+  --food:#C2336B; --activity:#2F5D73; --dessert:#B4651A; --lounge:#6B3FA0; --bar:#1F7A5C; --coffee:#8A5A2E; --brunch:#B8860B;
+  --display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141020; --surface:#1E182D; --surface-2:#2A2240; --fg:#F2ECF8; --muted:#A79CBD; --line:#3A3054;
+  --accent:#F0609A; --accent-fg:#1A0F1A; --steel:#7FB6CE; --steel-soft:#1E3440;
+  --food:#F0609A; --activity:#7FB6CE; --dessert:#E8A15A; --lounge:#B993F0; --bar:#5FD3A6; --coffee:#D6A777; --brunch:#E9C46A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141020; --surface:#1E182D; --surface-2:#2A2240; --fg:#F2ECF8; --muted:#A79CBD; --line:#3A3054;
+  --accent:#F0609A; --accent-fg:#1A0F1A; --steel:#7FB6CE; --steel-soft:#1E3440;
+  --food:#F0609A; --activity:#7FB6CE; --dessert:#E8A15A; --lounge:#B993F0; --bar:#5FD3A6; --coffee:#D6A777; --brunch:#E9C46A; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:clamp(1.9rem,6vw,2.6rem);font-weight:800;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:1.25rem;font-weight:800}
+h3{font-size:1rem;font-weight:600}
+.sub{color:var(--muted);margin:6px 0 0}
+.brand{font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg);margin-bottom:8px}
+.brand span{color:var(--accent)}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.outings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.outing{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 10px;text-align:left;display:grid;gap:2px;min-width:0}
+.outing b{font-family:var(--display);font-weight:800;font-size:1.02rem;line-height:1.15}
+.outing span{font-size:.78rem;color:var(--muted);line-height:1.3}
+.outing[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.outing[aria-pressed="true"] b{color:var(--accent)}
+
+.mood{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mood .lbl{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-right:2px}
+.mood button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem}
+.mood button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mood .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
+.mood button.grown[aria-pressed="true"]{background:var(--lounge);border-color:var(--lounge);color:#fff}
+.check{display:flex;gap:8px;align-items:center;font-weight:600}
+.check input{width:auto}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
+select,input,textarea{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:150px;font-size:.9rem}
+
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface-2);border-radius:999px;padding:4px;gap:4px}
+.tab{border:0;background:transparent;border-radius:999px;padding:10px 6px;font-weight:700;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+
+.cat{display:grid;gap:8px}
+.cat-head{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.cat-head .count{margin-left:auto;font-size:.8rem;color:var(--muted)}
+.rail{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.spot{flex:0 0 auto;width:170px;scroll-snap-align:start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:4px;align-content:start}
+.spot b{font-weight:700;line-height:1.25}
+.spot .meta{font-size:.8rem;color:var(--muted)}
+.spot[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--surface))}
+.spot[aria-pressed="true"] b::after{content:" ✓";color:var(--c)}
+.empty-rail{font-size:.88rem;color:var(--muted);background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--r);padding:12px}
+
+.btn{border:0;border-radius:999px;padding:11px 18px;font-weight:700;background:var(--surface-2);color:var(--fg)}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.roll{display:grid;gap:12px;justify-items:center;text-align:center;padding:22px 16px;background:var(--surface);border-radius:20px;border:1px solid var(--line)}
+.roll .btn.primary{font-size:1.1rem;padding:14px 28px}
+.roll p{margin:0;color:var(--muted);max-width:40ch}
+
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:14px}
+.plan-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.plan-head .price{margin-left:auto;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.stops{list-style:none;margin:0;padding:0;display:grid}
+.stop{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
+.stop:first-child{border-top:0}
+.badge{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.stop-main{min-width:0;display:grid;gap:2px}
+.stop-main b{font-size:1.02rem}
+.stop-main .meta{font-size:.84rem;color:var(--muted)}
+.stop-main a{font-size:.84rem;color:var(--steel);font-weight:600}
+.stop-main a.name{color:var(--fg);font-size:1.02rem;font-weight:700;text-decoration:none}
+.stop-main a.name:hover{text-decoration:underline}
+.links{display:flex;gap:14px;flex-wrap:wrap}
+.links a.reserve{color:var(--accent)}
+.link-edit{display:grid;gap:8px;grid-column:1/-1;padding:8px 0 4px}
+.stop.skipped .stop-main b{color:var(--muted);font-weight:500}
+.lock{border:1px solid var(--line);background:transparent;border-radius:10px;padding:6px 10px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.lock[aria-pressed="true"]{background:var(--steel-soft);color:var(--steel);border-color:transparent}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:12px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.form-grid .full{grid-column:1/-1}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+pre.example{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:.82rem;margin:0;overflow-x:auto;white-space:pre}
+.list{display:grid}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.x{border:0;background:transparent;color:var(--muted);font-size:.85rem;font-weight:700;padding:6px 8px;border-radius:8px}
+.x:hover{color:var(--accent)}
+.note{font-size:.85rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:20}
+.saved .item{grid-template-columns:1fr auto}
+
+@media (max-width:520px){
+  .outing b{font-size:.92rem}
+  .outing span{display:none}
+  .outing{padding:11px 8px;text-align:center}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-grid{grid-template-columns:1fr}
+  .stop{grid-template-columns:1fr auto}
+  .stop .badge{grid-column:1/-1;justify-self:start}
+}
+@media (prefers-reduced-motion:no-preference){
+  .spot,.tab,.btn,.outing{transition:background .15s,border-color .15s,transform .1s}
+  .btn:active{transform:scale(.97)}
+  .stop.fresh{animation:pop .35s ease}
+  @keyframes pop{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">Magic City <span>Nights</span></div>
+    <h1 id="headline">Build a <em>Birmingham</em> date</h1>
+    <p class="sub" id="subline">Pick your spots, or let it surprise you.</p>
+  </header>
+
+  <section class="outings" aria-label="Kind of night">
+    <button class="outing" data-outing="date" aria-pressed="true"><b>Date night</b><span>Food, activity, dessert, lounge</span></button>
+    <button class="outing" data-outing="girls" aria-pressed="false"><b>Girls night out</b><span>Dinner, activity, drinks, lounge</span></button>
+    <button class="outing" data-outing="bars" aria-pressed="false"><b>Bar hoppers</b><span>Three bars and a last call</span></button>
+    <button class="outing" data-outing="coffee" aria-pressed="false"><b>Coffee date</b><span>Coffee, activity, a bite, a treat</span></button>
+    <button class="outing" data-outing="brunch" aria-pressed="false"><b>Brunch date</b><span>Brunch, activity, coffee or a treat</span></button>
+    <button class="outing" data-outing="sun" aria-pressed="false"><b>Sun up to sundown</b><span>The whole day, brunch to last call</span></button>
+  </section>
+
+  <section class="mood" role="group" aria-label="Mood">
+    <button data-mood="" aria-pressed="true">Any mood</button>
+    <button data-mood="social" aria-pressed="false">🎉 Social</button>
+    <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button class="grown" id="grown-toggle" aria-pressed="false">🍷 Grown &amp; sexy</button>
+  </section>
+
+  <section class="filters" aria-label="Filters">
+    <div class="field"><label for="f-budget">Budget</label>
+      <select id="f-budget"><option value="4">Any price</option><option value="1">$ only</option><option value="2">Up to $$</option><option value="3">Up to $$$</option></select></div>
+    <div class="field"><label for="f-area">Area</label>
+      <select id="f-area"><option value="">Anywhere</option></select></div>
+    <div class="field"><label for="f-setting">Setting</label>
+      <select id="f-setting"><option value="">Any</option><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option></select></div>
+    <div class="field"><label for="f-dress">Dress code</label>
+      <select id="f-dress"><option value="">Any</option><option value="casual">Casual</option><option value="dressy">Dressed up</option></select></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-build" aria-selected="true">Build</button>
+    <button class="tab" role="tab" id="tab-surprise" aria-selected="false">Surprise me</button>
+    <button class="tab" role="tab" id="tab-spots" aria-selected="false">My spots</button>
+  </nav>
+
+  <section id="view-build" style="display:grid;gap:18px"></section>
+
+  <section id="view-surprise" hidden>
+    <div class="roll">
+      <h2 id="roll-title">Can't decide?</h2>
+      <p>Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.</p>
+      <button class="btn primary" id="roll">🎲 Roll it</button>
+    </div>
+  </section>
+
+  <section id="plan" class="plan" aria-live="polite"></section>
+
+  <section id="view-spots" hidden style="display:grid;gap:18px">
+    <div class="card">
+      <h2>Add a spot</h2>
+      <form id="add-form" class="form-grid">
+        <div class="field full"><label for="a-name">Name</label><input id="a-name" required placeholder="Place name"></div>
+        <div class="field"><label for="a-cat">Category</label>
+          <select id="a-cat"><option value="food">Food</option><option value="activity">Activity</option><option value="dessert">Dessert</option><option value="bar">Bar</option><option value="lounge">Lounge</option><option value="coffee">Coffee shop</option><option value="brunch">Brunch</option></select></div>
+        <div class="field"><label for="a-price">Price</label>
+          <select id="a-price"><option value="1">$</option><option value="2" selected>$$</option><option value="3">$$$</option><option value="4">$$$$</option></select></div>
+        <div class="field"><label for="a-area">Area</label><input id="a-area" placeholder="Southside, Avondale…" list="areas-list"></div>
+        <div class="field"><label for="a-setting">Setting</label>
+          <select id="a-setting"><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option><option value="both">Both</option></select></div>
+        <div class="field"><label for="a-mood">Mood</label>
+          <select id="a-mood"><option value="social">Social</option><option value="lowkey">Low key</option><option value="both" selected>Either one</option></select></div>
+        <div class="field"><label for="a-dress">Dress code</label>
+          <select id="a-dress"><option value="casual">Casual</option><option value="dressy">Dressed up</option><option value="both" selected>Either one</option></select></div>
+        <label class="check full" for="a-grown"><input type="checkbox" id="a-grown"> Grown &amp; sexy spot</label>
+        <div class="field full"><label for="a-address">Address (optional)</label><input id="a-address" placeholder="Street address"></div>
+        <div class="field full"><label for="a-web">Website (optional)</label><input id="a-web" type="url" placeholder="https://…"></div>
+        <div class="field full"><label for="a-res">Reservation link (optional)</label><input id="a-res" type="url" placeholder="Resy, OpenTable or their booking page"></div>
+        <div class="field full"><label for="a-note">Note (optional)</label><input id="a-note" placeholder="Get the oxtails, ask for the patio…"></div>
+        <div class="full row"><button class="btn primary" type="submit">Add spot</button></div>
+      </form>
+      <datalist id="areas-list"></datalist>
+    </div>
+
+    <div class="card">
+      <h2>Paste your whole list</h2>
+      <p class="hint">Put a category name on its own line (Food, Brunch, Activities, Dessert, Bars, Lounges, Coffee), then one place per line under it. Add price, area, indoor/outdoor, casual/dressed up, social/low key and grown after a | if you want.</p>
+<pre class="example">Food:
+Place name | $$ | Southside
+Another place | $$$ | Downtown | indoor | dressed up
+Bars:
+Bar name | $$ | Lakeview | outdoor | casual | social
+Lounges:
+Lounge name | $$$ | Downtown | low key | grown</pre>
+      <textarea id="bulk" aria-label="Paste your list" placeholder="Food:&#10;…"></textarea>
+      <div class="row"><button class="btn primary" id="bulk-add">Add all</button><span class="hint" id="bulk-msg"></span></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><h2>Your spots</h2><span class="hint" id="spot-count"></span></div>
+      <div id="spot-list" class="list"></div>
+    </div>
+
+    <div class="card">
+      <h2>Saved nights</h2>
+      <div id="saved-list" class="saved list"></div>
+    </div>
+  </section>
+
+  <p class="note" id="status" hidden></p>
+</div>
+
+<script>
+const CATS = {
+  food:{label:"Food", plural:"Food"},
+  activity:{label:"Activity", plural:"Activities"},
+  dessert:{label:"Dessert", plural:"Dessert"},
+  bar:{label:"Bar", plural:"Bars"},
+  lounge:{label:"Lounge", plural:"Lounges"},
+  coffee:{label:"Coffee", plural:"Coffee shops"},
+  brunch:{label:"Brunch", plural:"Brunch spots"},
+};
+const OUTINGS = {
+  date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", text:"Date night in Birmingham",
+    slots:[{id:"food",label:"Food",cats:["food"]},{id:"activity",label:"Activity",cats:["activity"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
+  girls:{name:"Girls night out", headline:"Plan a <em>girls night</em> out", sub:"Dinner with the ladies, something fun, drinks, then the lounge.", roll:"Ladies can't decide?", text:"Girls night out in Birmingham",
+    slots:[{id:"dinner",label:"Dinner",cats:["food"]},{id:"fun",label:"Activity",cats:["activity"]},{id:"drinks",label:"Drinks",cats:["bar"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
+  bars:{name:"Bar hoppers", headline:"Plan a <em>bar hop</em>", sub:"Three bars, then last call at a bar or lounge. No repeats.", roll:"Let the night pick the bars", text:"Bar hop in Birmingham",
+    slots:[{id:"bar1",label:"First stop",cats:["bar"]},{id:"bar2",label:"Second stop",cats:["bar"]},{id:"bar3",label:"Third stop",cats:["bar"]},{id:"last",label:"Last call",cats:["bar","lounge"]}]},
+  coffee:{name:"Coffee date", headline:"Plan a <em>coffee</em> date", sub:"Start with coffee, do something fun, grab a bite, end on something sweet.", roll:"Let the day pick the coffee", text:"Coffee date in Birmingham",
+    slots:[{id:"coffee",label:"Coffee",cats:["coffee"]},{id:"do",label:"Something to do",cats:["activity"]},{id:"bite",label:"Bite to eat",cats:["food","brunch"]},{id:"treat",label:"Sweet treat",cats:["dessert"]}]},
+  brunch:{name:"Brunch date", headline:"Plan a <em>brunch</em> date", sub:"Brunch first, something fun after, then coffee or something sweet.", roll:"Let the morning pick", text:"Brunch date in Birmingham",
+    slots:[{id:"brunch",label:"Brunch",cats:["brunch"]},{id:"do",label:"Something to do",cats:["activity"]},{id:"after",label:"Coffee or treat",cats:["coffee","dessert"]}]},
+  sun:{name:"Sun up to sundown", headline:"Sun up to <em>sundown</em>", sub:"The whole day out: brunch, something to do, dinner, dessert, an evening plan, then a bar or lounge to close it out.", roll:"Let the whole day pick itself", text:"Sun up to sundown in Birmingham",
+    slots:[{id:"brunch",label:"Brunch",cats:["brunch"]},{id:"morning",label:"Morning activity",cats:["activity"]},{id:"food",label:"Food",cats:["food"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"evening",label:"Evening activity",cats:["activity"]},{id:"close",label:"Bar or lounge",cats:["bar","lounge"]}]},
+};
+const SAMPLES = [
+  {category:"food",name:"Sample: soul food spot",price:2,area:"Southside",setting:"indoor",dress:"casual",mood:"social"},
+  {category:"food",name:"Sample: steakhouse",price:4,area:"Downtown",setting:"indoor",dress:"dressy",mood:"lowkey"},
+  {category:"activity",name:"Sample: walk at the park",price:1,area:"Downtown",setting:"outdoor",dress:"casual",mood:"lowkey"},
+  {category:"activity",name:"Sample: bowling night",price:2,area:"Homewood",setting:"indoor",dress:"casual",mood:"social"},
+  {category:"dessert",name:"Sample: ice cream shop",price:1,area:"Avondale",setting:"both",dress:"casual",mood:"lowkey"},
+  {category:"dessert",name:"Sample: bakery",price:2,area:"Southside",setting:"indoor",dress:"casual",mood:"lowkey"},
+  {category:"bar",name:"Sample: brewery patio",price:2,area:"Avondale",setting:"outdoor",dress:"casual",mood:"social"},
+  {category:"bar",name:"Sample: cocktail bar",price:3,area:"Downtown",setting:"indoor",dress:"dressy",mood:"lowkey"},
+  {category:"bar",name:"Sample: sports bar",price:2,area:"Lakeview",setting:"indoor",dress:"casual",mood:"social"},
+  {category:"bar",name:"Sample: wine bar",price:3,area:"Southside",setting:"indoor",dress:"dressy",mood:"lowkey"},
+  {category:"lounge",name:"Sample: rooftop lounge",price:3,area:"Downtown",setting:"outdoor",dress:"dressy",mood:"social"},
+  {category:"lounge",name:"Sample: hookah lounge",price:2,area:"Lakeview",setting:"indoor",dress:"casual",mood:"social"},
+];
+
+let spots = [], nights = [];
+let outing = "date";
+let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
+let locks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};
+let tab = "build";
+let mood = "";
+let grown = false;
+let editing = null;
+let db = null, dbReady = false, fresh = new Set();
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => "$".repeat(Math.max(1, Math.min(4, Number(n)||2)));
+const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
+const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
+const metaLine = s => [money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
+const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
+const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
+const linkRow = s => (safeUrl(s.reserve) ? `<a class="reserve" href="${esc(s.reserve)}" target="_blank" rel="noopener">Reserve ↗</a>` : "") +
+  (safeUrl(s.website) ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">Website ↗</a>` : `<a href="${esc(lookUp(s))}" target="_blank" rel="noopener">Look it up ↗</a>`);
+const color = k => `var(--${CATS[k] ? k : "accent"})`;
+const O = () => OUTINGS[outing];
+const P = () => picks[outing];
+const L = () => locks[outing];
+
+try {
+  const s = JSON.parse(localStorage.getItem("bdb-ui2")||"{}");
+  if (s.picks) picks = {...picks, ...s.picks};
+  if (s.locks) locks = {...locks, ...s.locks};
+  if (OUTINGS[s.outing]) outing = s.outing;
+  if (s.tab) tab = s.tab;
+  if (s.mood === "social" || s.mood === "lowkey") mood = s.mood;
+  grown = !!s.grown;
+} catch(e) {}
+function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown})); } catch(e) {} }
+
+function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
+function passes(s){
+  const f = filters();
+  if ((Number(s.price)||2) > f.budget) return false;
+  if (f.area && (s.area||"").toLowerCase() !== f.area.toLowerCase()) return false;
+  if (f.setting && s.setting && s.setting !== "both" && s.setting !== f.setting) return false;
+  if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
+  if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
+  if (grown && !s.grown) return false;
+  return true;
+}
+const spotById = id => spots.find(s => s.id === id);
+const takenElsewhere = slotId => new Set(Object.entries(P()).filter(([k,v]) => k !== slotId && v).map(([,v]) => v));
+
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1800); }
+function status(msg){ const el = $("#status"); el.hidden = !msg; el.textContent = msg || ""; }
+
+/* ---------- render ---------- */
+function renderHeader(){
+  $("#headline").innerHTML = O().headline;
+  $("#subline").textContent = O().sub;
+  $("#roll-title").textContent = O().roll;
+  document.querySelectorAll(".outing").forEach(b => b.setAttribute("aria-pressed", b.dataset.outing === outing));
+  document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
+  $("#grown-toggle").setAttribute("aria-pressed", grown);
+}
+
+function renderAreas(){
+  const areas = [...new Set(spots.map(s => (s.area||"").trim()).filter(Boolean))].sort();
+  const sel = $("#f-area"), cur = sel.value;
+  sel.innerHTML = `<option value="">Anywhere</option>` + areas.map(a => `<option ${a===cur?"selected":""}>${esc(a)}</option>`).join("");
+  $("#areas-list").innerHTML = areas.map(a => `<option value="${esc(a)}">`).join("");
+}
+
+function renderBuild(){
+  $("#view-build").innerHTML = O().slots.map(slot => {
+    const all = spots.filter(s => slot.cats.includes(s.category));
+    const taken = takenElsewhere(slot.id);
+    const list = all.filter(s => passes(s) && !taken.has(s.id));
+    const word = slot.cats.map(c => CATS[c].plural.toLowerCase()).join(" or ");
+    const body = list.length
+      ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
+          <b>${esc(s.name)}</b><span class="meta">${metaLine(s)}</span></button>`).join("")
+      : `<div class="empty-rail">${all.length ? (all.every(s => taken.has(s.id)) ? `Add more ${word} so this stop has its own pick.` : "Nothing here fits your filters.") : `No ${word} yet. Add some in <b>My spots</b>.`}</div>`;
+    return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail">${body}</div></div>`;
+  }).join("");
+}
+
+function chosenStops(){ return O().slots.map(slot => ({slot, spot: spotById(P()[slot.id])})); }
+
+function planText(){
+  const lines = chosenStops().filter(x => x.spot).map(({slot, spot}) => `${slot.label}: ${spot.name}${spot.area?` (${spot.area})`:""}`);
+  return lines.length ? O().text + "\n" + lines.join("\n") : "";
+}
+
+function renderPlan(){
+  const el = $("#plan");
+  el.hidden = tab === "spots";
+  if (el.hidden) return;
+  const stops = chosenStops();
+  const chosen = stops.filter(x => x.spot).map(x => x.spot);
+  const top = chosen.length ? Math.max(...chosen.map(s => Number(s.price)||2)) : 0;
+  const rows = stops.map(({slot, spot: s}) => {
+    const c = s ? color(s.category) : color(slot.cats[0]);
+    const side = tab === "surprise"
+      ? `<button class="lock" data-lock="${slot.id}" aria-pressed="${!!L()[slot.id]}">${L()[slot.id] ? "🔒 Locked" : "Lock"}</button>`
+      : (s ? `<button class="x" data-clear="${slot.id}" aria-label="Remove ${slot.label}">Remove</button>` : `<span></span>`);
+    if (!s) return `<li class="stop skipped" style="--c:${c}"><span class="badge">${slot.label}</span><div class="stop-main"><b>${tab==="surprise"?"Roll to fill":"Skipped"}</b></div><span></span></li>`;
+    const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+    return `<li class="stop ${fresh.has(slot.id)?"fresh":""}" style="--c:${c}"><span class="badge">${slot.label}</span>
+      <div class="stop-main">${nameLink(s)}<span class="meta">${metaLine(s)}${s.address?` · ${esc(s.address)}`:""}</span>${s.note?`<span class="meta">${esc(s.note)}</span>`:""}
+      <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span></div>${side}</li>`;
+  }).join("");
+  fresh.clear();
+  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : "Nothing picked yet"}</span></div>
+    <ol class="stops">${rows}</ol>
+    <div class="row"><button class="btn primary small" id="copy-plan" ${chosen.length?"":"disabled"}>Copy plan to text</button>
+    <button class="btn small" id="save-plan" ${chosen.length && db ?"":"disabled"}>Save this night</button>
+    <button class="btn ghost small" id="clear-plan" ${chosen.length?"":"disabled"}>Start over</button></div>`;
+}
+
+function renderSpots(){
+  $("#spot-count").textContent = spots.length ? `${spots.length} total` : "";
+  const list = $("#spot-list");
+  if (!spots.length) {
+    list.innerHTML = `<div style="display:grid;gap:10px"><p class="hint">No spots yet. Add them above or paste your whole list. Want to see how it works first? Load a few sample spots, then delete them when you add your real ones.</p>
+      <div class="row"><button class="btn small" id="load-samples" ${db?"":"disabled"}>Load sample spots</button></div></div>`;
+    return;
+  }
+  const hasSamples = spots.some(s => s.sample);
+  list.innerHTML = (hasSamples ? `<div class="row" style="padding-bottom:10px"><button class="btn ghost small" id="clear-samples">Remove sample spots</button></div>` : "") +
+    Object.keys(CATS).flatMap(k => spots.filter(s => s.category === k).sort((a,b) => a.name.localeCompare(b.name)).map(s =>
+      `<div class="item" style="--c:${color(k)}"><span class="badge">${CATS[k].label}</span><div class="stop-main">${nameLink(s)}<span class="meta">${metaLine(s)}</span><span class="links">${linkRow(s)}</span></div><div class="row" style="gap:0"><button class="x" data-editlinks="${esc(s.id)}">Links</button><button class="x" data-del="${esc(s.id)}" aria-label="Delete ${esc(s.name)}">Delete</button></div>${editing === s.id ? `<form class="link-edit" data-savelinks="${esc(s.id)}"><input id="e-web" type="url" placeholder="Website (https://…)" value="${esc(s.website||"")}"><input id="e-res" type="url" placeholder="Reservation link (Resy, OpenTable…)" value="${esc(s.reserve||"")}"><div class="row"><button class="btn primary small" type="submit">Save links</button><button class="btn ghost small" type="button" data-editlinks="">Cancel</button></div></form>` : ""}</div>`)).join("");
+}
+
+function renderSaved(){
+  const el = $("#saved-list");
+  if (!nights.length) { el.innerHTML = `<p class="hint">Nights you save show up here.</p>`; return; }
+  el.innerHTML = [...nights].sort((a,b) => (b.savedAt||"").localeCompare(a.savedAt||"")).map(d => {
+    const kind = (OUTINGS[d.outing] || OUTINGS.date).name;
+    const when = d.savedAt ? new Date(d.savedAt).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}) : "";
+    return `<div class="item"><div class="stop-main"><b>${esc((d.stops||[]).map(s => s.name).join(" → "))}</b><span class="meta">${kind}${when?` · ${when}`:""}</span></div>
+     <div class="row"><button class="x" data-load="${esc(d.id)}">Use</button><button class="x" data-delnight="${esc(d.id)}">Delete</button></div></div>`;
+  }).join("");
+}
+
+function render(){
+  for (const t of ["build","surprise","spots"]) {
+    $("#tab-"+t).setAttribute("aria-selected", tab === t);
+    $("#view-"+t).hidden = tab !== t;
+  }
+  renderHeader(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+  remember();
+}
+
+/* ---------- actions ---------- */
+function roll(){
+  const usable = spots.filter(passes);
+  if (!usable.length) { toast(spots.length ? "No spots fit those filters" : "Add some spots first"); return; }
+  // keep locked picks, clear the rest, then fill without repeats
+  for (const slot of O().slots) if (!(L()[slot.id] && spotById(P()[slot.id]))) { fresh.add(slot.id); }
+  const prev = {...P()};
+  for (const id of fresh) P()[id] = null;
+  for (const slot of O().slots) {
+    if (!fresh.has(slot.id)) continue;
+    const taken = takenElsewhere(slot.id);
+    const pool = usable.filter(s => slot.cats.includes(s.category) && !taken.has(s.id));
+    if (!pool.length) continue;
+    const others = pool.filter(s => s.id !== prev[slot.id]);
+    const from = others.length ? others : pool;
+    P()[slot.id] = from[Math.floor(Math.random() * from.length)].id;
+  }
+  render();
+}
+
+async function copyPlan(){
+  const text = planText(); if (!text) return;
+  try { await navigator.clipboard.writeText(text); toast("Copied. Paste it in a text."); }
+  catch(e) {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("Copied. Paste it in a text."); } catch(_) { toast("Select the plan and copy it"); }
+    ta.remove();
+  }
+}
+
+function catWord(w){
+  w = w.toLowerCase().replace(/[:\s]+$/,"").trim();
+  if (/^(brunch|breakfast|breakfast and brunch|brunch spots?)$/.test(w)) return "brunch";
+  if (/^(food|dinner|eat|eats|restaurants?|lunch)$/.test(w)) return "food";
+  if (/^(activit(y|ies)|things to do|fun)$/.test(w)) return "activity";
+  if (/^(desserts?|sweets?|treats?)$/.test(w)) return "dessert";
+  if (/^(bars?|drinks|pubs?|breweries|brewery|bar hop(pers|ping)?)$/.test(w)) return "bar";
+  if (/^(lounges?|nightlife|hookah|clubs?)$/.test(w)) return "lounge";
+  if (/^(coffee|coffee shops?|cafes?|caf\u00e9s?)$/.test(w)) return "coffee";
+  return null;
+}
+function parseBulk(text){
+  const out = []; let cat = null;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/^[\s\-•*\d.)]+/, "").trim();
+    if (!line) continue;
+    const head = catWord(line);
+    if (head && !line.includes("|")) { cat = head; continue; }
+    let parts = line.split("|").map(p => p.trim()).filter(Boolean);
+    let c = cat;
+    if (parts.length > 1 && catWord(parts[0])) { c = catWord(parts[0]); parts = parts.slice(1); }
+    if (!c || !parts.length) continue;
+    const spot = {category:c, name:parts[0], price:2, area:"", setting:"both", dress:"both", mood:"both", note:"", address:""};
+    const rest = [];
+    for (const p of parts.slice(1)) {
+      if (/^\$+$/.test(p)) spot.price = Math.min(4, p.length);
+      else if (/^(indoor|outdoor|both)$/i.test(p)) spot.setting = p.toLowerCase();
+      else if (/^grown( (and|&) sexy)?$/i.test(p)) spot.grown = true;
+      else if (/^casual$/i.test(p)) spot.dress = "casual";
+      else if (/^(social|lively|turnt|busy|party)$/i.test(p)) spot.mood = "social";
+      else if (/^(low[ -]?key|chill|quiet|laid[ -]?back)$/i.test(p)) spot.mood = "lowkey";
+      else if (/^(dressy|dressed[ -]?up|upscale|fancy)$/i.test(p)) spot.dress = "dressy";
+      else rest.push(p);
+    }
+    spot.area = rest[0] || ""; spot.note = rest.slice(1).join(" · ");
+    out.push(spot);
+  }
+  return out;
+}
+
+async function addSpots(list){
+  if (!db) { for (const s of list) spots.push({...s, id:"local-" + Math.random().toString(36).slice(2)}); render(); return list.length; }
+  let n = 0;
+  for (const s of list) {
+    try { await db.collection("spots").add({...s, addedAt:new Date().toISOString()}); n++; }
+    catch(e) { if (e && e.code === "quota_exceeded") { toast("The list is full. Delete a few spots first."); break; } }
+  }
+  return n;
+}
+async function removeSpot(id){
+  if (!db || id.startsWith("local-")) { spots = spots.filter(s => s.id !== id); render(); return; }
+  try { await db.doc("spots/" + id).delete(); } catch(e) { toast("Couldn't delete that one. Try again."); }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.outing) { outing = t.dataset.outing; render(); return; }
+  if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
+  if (t.id === "grown-toggle") { grown = !grown; render(); return; }
+  if (t.dataset.editlinks !== undefined) { editing = t.dataset.editlinks || null; renderSpots(); return; }
+  if (t.matches(".tab")) { tab = t.id.replace("tab-",""); render(); return; }
+  if (t.matches(".spot")) { const k = t.dataset.slot; P()[k] = P()[k] === t.dataset.id ? null : t.dataset.id; render(); return; }
+  if (t.id === "roll") { roll(); return; }
+  if (t.dataset.lock) { const k = t.dataset.lock; if (!spotById(P()[k])) { toast("Roll first, then lock"); return; } L()[k] = !L()[k]; render(); return; }
+  if (t.dataset.clear) { P()[t.dataset.clear] = null; render(); return; }
+  if (t.id === "copy-plan") { copyPlan(); return; }
+  if (t.id === "clear-plan") { picks[outing] = {}; locks[outing] = {}; render(); return; }
+  if (t.id === "save-plan" && db) {
+    const stops = chosenStops().filter(x => x.spot).map(({slot, spot}) => ({slot:slot.id, id:spot.id, name:spot.name}));
+    try { await db.collection("dates").add({outing, stops, savedAt:new Date().toISOString()}); toast("Saved"); } catch(_) { toast("Couldn't save. Try again."); }
+    return;
+  }
+  if (t.dataset.del) { removeSpot(t.dataset.del); return; }
+  if (t.id === "load-samples") { t.disabled = true; await addSpots(SAMPLES.map(s => ({...s, sample:true, note:"", address:""}))); toast("Samples loaded"); return; }
+  if (t.id === "clear-samples") { t.disabled = true; for (const s of spots.filter(s => s.sample)) await removeSpot(s.id); toast("Samples removed"); return; }
+  if (t.dataset.load) {
+    const d = nights.find(x => x.id === t.dataset.load); if (!d) return;
+    outing = OUTINGS[d.outing] ? d.outing : "date";
+    picks[outing] = {};
+    for (const s of d.stops||[]) {
+      const slotId = s.slot || (s.category && O().slots.find(sl => sl.cats.includes(s.category))?.id);
+      if (slotId && spotById(s.id)) picks[outing][slotId] = s.id;
+    }
+    tab = "build"; render(); window.scrollTo({top:0, behavior:"smooth"}); return;
+  }
+  if (t.dataset.delnight && db) { try { await db.doc("dates/" + t.dataset.delnight).delete(); } catch(_) { toast("Couldn't delete. Try again."); } return; }
+  if (t.id === "bulk-add") {
+    const list = parseBulk($("#bulk").value);
+    if (!list.length) { $("#bulk-msg").textContent = "Nothing to add. Put a category line like “Food:” above your places."; return; }
+    t.disabled = true; $("#bulk-msg").textContent = `Adding ${list.length}…`;
+    const n = await addSpots(list);
+    t.disabled = false; $("#bulk-msg").textContent = `Added ${n} spot${n===1?"":"s"}.`; $("#bulk").value = "";
+  }
+});
+
+$("#add-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("#a-name").value.trim(); if (!name) return;
+  const spot = {name, category:$("#a-cat").value, price:Number($("#a-price").value), area:$("#a-area").value.trim(), setting:$("#a-setting").value, dress:$("#a-dress").value, mood:$("#a-mood").value, grown:$("#a-grown").checked, website:safeUrl($("#a-web").value.trim()), reserve:safeUrl($("#a-res").value.trim()), address:$("#a-address").value.trim(), note:$("#a-note").value.trim()};
+  const n = await addSpots([spot]);
+  if (n) { toast(`Added ${name}`); for (const id of ["#a-name","#a-address","#a-note","#a-web","#a-res"]) $(id).value = ""; $("#a-grown").checked = false; $("#a-name").focus(); }
+});
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("[data-savelinks]"); if (!f) return;
+  e.preventDefault();
+  const id = f.dataset.savelinks, website = safeUrl($("#e-web").value.trim()), reserve = safeUrl($("#e-res").value.trim());
+  if (($("#e-web").value.trim() && !website) || ($("#e-res").value.trim() && !reserve)) { toast("Links need to start with https://"); return; }
+  if (!db || id.startsWith("local-")) { Object.assign(spotById(id) || {}, {website, reserve}); editing = null; render(); return; }
+  try { await db.doc("spots/" + id).update({website, reserve}); editing = null; toast("Links saved"); renderSpots(); } catch(_) { toast("Couldn't save the links. Try again."); }
+});
+for (const id of ["#f-budget","#f-area","#f-setting","#f-dress"]) $(id).addEventListener("change", render);
+
+render();
+
+/* ---------- storage ---------- */
+(async () => {
+  const timer = setTimeout(() => { if (!dbReady) status("Your spots are taking a while to load. They'll show up once the connection catches up."); }, 10000);
+  try { db = window.claude ? await window.claude.use("db") : null; } catch(e) { db = null; }
+  if (!db) { clearTimeout(timer); status("Saving isn't available in this view. Spots you add here last until you close the page."); render(); return; }
+  db.collection("spots").onSnapshot(snap => {
+    spots = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    if (!snap.metadata.fromCache) {
+      dbReady = true; clearTimeout(timer); status("");
+      for (const o of Object.keys(picks)) for (const k of Object.keys(picks[o])) if (picks[o][k] && !spotById(picks[o][k])) { picks[o][k] = null; locks[o][k] = false; }
+    }
+    render();
+  }, () => { clearTimeout(timer); status("Your spots couldn't load right now. Reopen the page in a bit."); });
+  db.collection("dates").onSnapshot(snap => { nights = snap.docs.map(d => ({id:d.id, ...d.data()})); renderSaved(); }, () => {});
+})();
+</script>
+
+</body></html>
