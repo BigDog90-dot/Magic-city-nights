@@ -887,17 +887,33 @@ render();
       try {
         const r = await fetch("spots.json", {cache:"no-cache"});
         if (r.ok) {
-          const fresh = new Map((await r.json()).map(x => [x.id, x]));
+          const freshList = await r.json();
+          const fresh = new Map(freshList.map(x => [x.id, x]));
           let changed = false;
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
             for (const k of ["website","reserve","address","area"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
           }
+          // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
+          // because every starter id goes on the "seen" list once it has been offered.
+          let seen = null;
+          try { seen = JSON.parse(localStorage.getItem("mcn-seen-v1") || "null"); } catch(e) {}
+          if (!Array.isArray(seen)) seen = freshList.filter(x => !x.added).map(x => x.id);
+          const seenSet = new Set(seen), have = new Set(spots.map(x => x.id));
+          for (const f of freshList) {
+            if (seenSet.has(f.id)) continue;
+            seenSet.add(f.id);
+            if (!have.has(f.id)) { spots.push({...f}); changed = true; }
+          }
+          try { localStorage.setItem("mcn-seen-v1", JSON.stringify([...seenSet])); } catch(e) {}
           if (changed) saveLocal();
         }
       } catch(e) {}
     } else {
-      try { const r = await fetch("spots.json", {cache:"no-cache"}); if (r.ok) spots = await r.json(); } catch(e) {}
+      try {
+        const r = await fetch("spots.json", {cache:"no-cache"});
+        if (r.ok) { spots = await r.json(); try { localStorage.setItem("mcn-seen-v1", JSON.stringify(spots.map(x => x.id))); } catch(e) {} }
+      } catch(e) {}
     }
     status("Spots and nights you change save in this browser on this device.");
     render(); return;
