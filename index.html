@@ -208,6 +208,25 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
   .btn{padding:12px 16px}
   .plan .row .btn{flex:1 1 auto}
 }
+/* Shared plan page (opened from an invite link) */
+body.shared .wrap > :not(header):not(#shared){display:none !important}
+body.shared #headline, body.shared #subline{display:none}
+#shared{display:grid;gap:34px}
+.sh-top{display:grid;gap:14px}
+.sh-top h1{font-size:clamp(2rem,8vw,2.6rem);line-height:1.1}
+.sh-chips{display:flex;flex-wrap:wrap;gap:10px}
+.sh-chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:.95rem}
+.sh-sec{display:grid;gap:18px}
+.sh-sec h2{font-family:var(--serif);font-size:1.05rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sh-stop{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--accent));border-radius:18px;padding:20px;display:grid;gap:10px}
+.sh-kind{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sh-name{font-family:var(--serif);font-size:1.4rem;line-height:1.2;color:var(--fg)}
+.sh-where{color:var(--muted);font-size:.95rem;line-height:1.5}
+.sh-links{display:flex;flex-wrap:wrap;gap:10px;padding-top:6px}
+.sh-links a{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-weight:700;font-size:.92rem}
+.sh-links a.go{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.sh-foot{display:grid;gap:12px;justify-items:center;text-align:center;padding-top:10px;color:var(--muted)}
+.sh-foot a{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
@@ -218,6 +237,8 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
     <h1 id="headline">Build a <em>Birmingham</em> date</h1>
     <p class="sub" id="subline">Pick your spots, or let it surprise you.</p>
   </header>
+
+  <section id="shared" hidden aria-live="polite"></section>
 
   <section class="outings" aria-label="Kind of night">
     <button class="outing" data-outing="date" aria-pressed="true"><b>Date night</b><span>Food, activity, dessert, lounge</span></button>
@@ -750,13 +771,23 @@ function inviteText(){
       groups[groups.length - 1].lines.push(`${stopEmoji(spot)} ${stopLabel(slot)} — ${spot.name}`);
     }
     parts.push(`Here's our ${when} ✨`);
-    if (groups.length > 1) groups.forEach(g => parts.push(`${SECTION_ICON[g.sec]} ${g.sec.toUpperCase()}\n${g.lines.join("\n")}`));
-    else if (groups.length) parts.push(groups[0].lines.join("\n"));
+    if (groups.length > 1) groups.forEach(g => parts.push(`${SECTION_ICON[g.sec]} ${g.sec.toUpperCase()}\n${g.lines.join("\n\n")}`));
+    else if (groups.length) parts.push(groups[0].lines.join("\n\n"));
+    parts.push(details, `See our full plan 👇\n${planLink(timeVal, $("#inv-dress").value)}`);
   } else {
-    parts.push(`I've got our ${when} planned 😉\nThe rest is a surprise.`);
+    parts.push(`I've got our ${when} planned 😉\nThe rest is a surprise.`, details, `Planned with Magic City Nights 🌙\n${SITE_URL}`);
   }
-  parts.push(details, `Planned with Magic City Nights 🌙\n${SITE_URL}`);
-  return parts.filter(Boolean).join("\n\n");
+  return parts.filter(Boolean).join("\n\n\n");
+}
+/* A link that carries the plan itself, so whoever opens it sees the same night. Starter spots go by id;
+   spots someone added themselves carry their details. */
+function b64url(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function unb64url(str){ str = str.replace(/-/g,"+").replace(/_/g,"/"); while (str.length % 4) str += "="; return decodeURIComponent(escape(atob(str))); }
+function planLink(timeVal, dress){
+  const st = chosenStops().filter(x => x.spot).map(({slot, spot}) => [slot.id, /^s-/.test(spot.id) ? spot.id :
+    {n:spot.name, c:spot.category, a:spot.area || "", d:spot.address || "", w:safeUrl(spot.website), r:safeUrl(spot.reserve)}]);
+  const data = {o:outing, s:st}; if (timeVal) data.t = timeVal; if (dress) data.d = dress;
+  return SITE_URL + "?plan=" + b64url(JSON.stringify(data));
 }
 function renderInvite(){
   document.querySelectorAll("[data-invite-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.inviteMode === inviteMode));
@@ -971,6 +1002,52 @@ render();
     render();
   }, () => { clearTimeout(timer); status("Your spots couldn't load right now. Reopen the page in a bit."); });
   db.collection("dates").onSnapshot(snap => { nights = snap.docs.map(d => ({id:d.id, ...d.data()})); renderSaved(); }, () => {});
+})();
+
+/* ---------- shared plan page ---------- */
+(async () => {
+  let data = null;
+  try { const raw = new URLSearchParams(location.search).get("plan"); if (raw) data = JSON.parse(unb64url(raw)); } catch(e) { data = null; }
+  if (!data || !OUTINGS[data.o] || !Array.isArray(data.s)) return;
+  document.body.classList.add("shared");
+  const box = $("#shared"); box.hidden = false;
+  box.innerHTML = `<p class="hint">Loading the plan…</p>`;
+  let starter = new Map();
+  try { const r = await fetch("spots.json", {cache:"no-cache"}); if (r.ok) starter = new Map((await r.json()).map(x => [x.id, x])); } catch(e) {}
+  const o = OUTINGS[data.o], times = SECTION_TIMES[data.o] || {};
+  const stops = data.s.map(([slotId, v]) => {
+    const slot = o.slots.find(x => x.id === slotId); if (!slot) return null;
+    const spot = typeof v === "string" ? starter.get(v)
+      : v && v.n ? {name:v.n, category:v.c, area:v.a, address:v.d, website:v.w, reserve:v.r} : null;
+    return spot ? {slot, spot} : null;
+  }).filter(Boolean);
+  if (!stops.length) { box.innerHTML = `<p class="hint">This plan couldn't be opened. Ask for the invite again.</p>`; return; }
+  const hour = /^(\d{1,2})/.test(data.t || "") ? Number(data.t.slice(0, 2)) : null;
+  const when = (hour !== null ? hour < 12 : times[stops[0].slot.id] === "Morning") ? "day" : "night";
+  const chips = [data.t && `⏰ Be ready by ${timeWord(data.t)}`, dressWord(data.d) && `👗 ${dressWord(data.d)[0].toUpperCase() + dressWord(data.d).slice(1)}`].filter(Boolean);
+  const groups = [];
+  for (const x of stops) {
+    const sec = times[x.slot.id] || "Evening";
+    if (!groups.length || groups[groups.length - 1].sec !== sec) groups.push({sec, items: []});
+    groups[groups.length - 1].items.push(x);
+  }
+  const card = ({slot, spot: s}) => {
+    const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+    const where = [s.address, s.area].filter(Boolean).map(esc).join(" · ");
+    return `<article class="sh-stop" style="--c:${color(s.category)}">
+      <span class="sh-kind">${stopEmoji(s)} ${esc(stopLabel(slot))}</span>
+      <span class="sh-name">${esc(s.name)}</span>
+      ${where ? `<span class="sh-where">${where}</span>` : ""}
+      <span class="sh-links"><a class="go" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions</a>
+      ${safeUrl(s.reserve) ? `<a href="${esc(s.reserve)}" target="_blank" rel="noopener">Reservation</a>` : ""}
+      ${safeUrl(s.website) ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">Website</a>` : ""}</span>
+    </article>`;
+  };
+  box.innerHTML = `<div class="sh-top"><h1>Here's our <em>${when}</em> ✨</h1>
+      ${chips.length ? `<div class="sh-chips">${chips.map(c => `<span class="sh-chip">${esc(c)}</span>`).join("")}</div>` : ""}</div>
+    ${groups.map(g => `<section class="sh-sec">${groups.length > 1 ? `<h2>${SECTION_ICON[g.sec]} ${g.sec}</h2>` : ""}${g.items.map(card).join("")}</section>`).join("")}
+    <div class="sh-foot"><span>Planned with Magic City Nights 🌙</span><a href="${esc(SITE_URL)}">Plan your own night →</a></div>`;
+  document.title = `Our ${when} · Magic City Nights`;
 })();
 </script>
 
