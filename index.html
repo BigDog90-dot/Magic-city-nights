@@ -143,6 +143,27 @@ pre.example{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:
 .x:hover{color:var(--accent)}
 .note{font-size:.85rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:20}
+/* Search */
+.search{position:relative;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 12px)}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:0 6px 0 16px;min-height:50px}
+.search-box:focus-within{border-color:var(--accent)}
+.search-box svg{flex:none;width:18px;height:18px;color:var(--accent)}
+.search-box input{flex:1;min-width:0;width:auto;border:0;background:transparent;border-radius:0;padding:12px 0;color:var(--fg);outline:none}
+.search-box input::placeholder{color:var(--muted);opacity:1}
+.search-box input::-webkit-search-cancel-button,.search-box input::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
+.search-x{flex:none;width:38px;height:38px;border:0;border-radius:50%;background:var(--sel);color:var(--accent);font-size:1.3rem;line-height:1;display:grid;place-items:center}
+.search-results{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:15;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgb(0 0 0 / .5);max-height:360px;overflow-y:auto;overscroll-behavior:contain;padding:6px}
+.q-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:10px;padding:11px 12px;color:var(--fg);line-height:1.4}
+.q-item:hover,.q-item:focus-visible{background:var(--sel)}
+.q-item b{font-weight:700}
+.q-item span{color:var(--muted);font-size:.88rem}
+.q-empty{margin:0;padding:14px 12px;color:var(--muted);font-size:.92rem}
+.sd{display:grid;gap:10px;justify-items:start}
+.sd p{margin:0}
+.sd .links a{font-size:.92rem;color:var(--steel);font-weight:600}
+.sd .links a.reserve{color:var(--accent)}
+.sd .row{justify-self:stretch}
+.sd .row .btn{flex:1 1 auto}
 /* Invite panel */
 dialog.invite{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:20px;padding:18px;width:min(460px,calc(100% - 32px));max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto}
 dialog.invite::backdrop{background:rgb(5 10 20 / .72)}
@@ -212,6 +233,15 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
     <button class="grown" id="grown-toggle" aria-pressed="false">🍷 Grown &amp; sexy</button>
+  </section>
+
+  <section class="search" id="search" role="search">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search spots, areas, or vibes" aria-label="Search spots, areas, or vibes" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-controls="q-results" aria-expanded="false">
+      <button type="button" class="search-x" id="q-clear" aria-label="Clear search" hidden>×</button>
+    </div>
+    <div class="search-results" id="q-results" role="listbox" aria-label="Matching spots" hidden></div>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -314,6 +344,18 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
     <div class="field"><span class="eyebrow">Preview</span><pre id="inv-preview"></pre></div>
     <div class="row"><button type="button" class="btn primary" id="invite-send">Send</button><button type="button" class="btn ghost" id="invite-cancel">Cancel</button></div>
   </form>
+</dialog>
+
+<dialog class="invite" id="spot-detail" aria-labelledby="sd-name">
+  <div class="sd">
+    <span class="badge" id="sd-cat"></span>
+    <h2 id="sd-name"></h2>
+    <p class="hint" id="sd-meta"></p>
+    <p id="sd-note" hidden></p>
+    <div class="links" id="sd-links"></div>
+    <p class="hint" id="sd-fit"></p>
+    <div class="row"><button type="button" class="btn primary" id="detail-add">Add to my plan</button><button type="button" class="btn ghost" id="detail-close">Close</button></div>
+  </div>
 </dialog>
 
 <script>
@@ -545,6 +587,103 @@ async function copyPlan(){
   }
 }
 
+/* ---------- search ---------- */
+let detailId = null;
+const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’`]/g, "");
+function haystack(s){
+  const c = CATS[s.category] || {};
+  return norm([s.name, s.area, c.label, c.plural, s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+}
+function searchSpots(query){
+  const words = norm(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const q = words.join(" ");
+  return spots.filter(s => { const h = haystack(s); return words.every(w => h.includes(w)); })
+    .map(s => { const n = norm(s.name); return {s, rank: n.startsWith(q) ? 0 : n.split(/\s+/).some(w => w.startsWith(words[0])) ? 1 : n.includes(q) ? 2 : 3}; })
+    .sort((a, b) => a.rank - b.rank || a.s.name.localeCompare(b.s.name))
+    .slice(0, 40).map(x => x.s);
+}
+function resultLine(s){
+  return [CATS[s.category] ? CATS[s.category].label : "", s.area, money(s.price)].filter(Boolean).map(esc).join(" · ");
+}
+function showResults(open){
+  const box = $("#q-results");
+  box.hidden = !open;
+  $("#q").setAttribute("aria-expanded", open);
+  if (open) fitResults();
+}
+function renderResults(){
+  const q = $("#q").value;
+  $("#q-clear").hidden = !q;
+  if (!q.trim()) { showResults(false); return; }
+  const list = searchSpots(q);
+  $("#q-results").innerHTML = list.length
+    ? list.map(s => `<button type="button" class="q-item" role="option" data-qpick="${esc(s.id)}"><b>${esc(s.name)}</b><span> · ${resultLine(s)}</span></button>`).join("")
+    : `<p class="q-empty">No spots found. Try another name or area.</p>`;
+  $("#q-results").scrollTop = 0;
+  showResults(true);
+}
+// Keep the dropdown inside the part of the screen the phone keyboard leaves visible.
+function fitResults(){
+  const box = $("#q-results"); if (box.hidden) return;
+  const vv = window.visualViewport;
+  const visibleBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+  const top = $("#search .search-box").getBoundingClientRect().bottom + 6;
+  box.style.maxHeight = Math.max(140, Math.min(360, visibleBottom - top - 12)) + "px";
+}
+function fitSlot(s){
+  const slots = O().slots.filter(sl => sl.cats.includes(s.category));
+  if (!slots.length) return {none:true};
+  const have = slots.find(sl => P()[sl.id] === s.id) || O().slots.find(sl => P()[sl.id] === s.id);
+  if (have) return {already:have};
+  const slot = slots.find(sl => !spotById(P()[sl.id])) || slots[0];
+  return {slot, replaces: spotById(P()[slot.id])};
+}
+function openSpotDetail(id){
+  const s = spotById(id); if (!s) return;
+  detailId = id;
+  const cat = $("#sd-cat");
+  cat.textContent = CATS[s.category] ? CATS[s.category].label : "Spot";
+  cat.style.setProperty("--c", color(s.category));
+  $("#sd-name").textContent = s.name;
+  $("#sd-meta").innerHTML = metaLine(s) + (s.address ? ` · ${esc(s.address)}` : "");
+  $("#sd-note").hidden = !s.note; $("#sd-note").textContent = s.note || "";
+  const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+  $("#sd-links").innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}`;
+  const f = fitSlot(s), add = $("#detail-add");
+  add.disabled = !f.slot;
+  $("#sd-fit").textContent = f.none ? `${CATS[s.category] ? CATS[s.category].plural : "This spot"} aren't a stop in ${O().name}. Pick another kind of night to add it.`
+    : f.already ? `Already in your plan as ${f.already.label}.`
+    : f.replaces ? `Goes in your ${f.slot.label} stop, replacing ${f.replaces.name}.`
+    : `Goes in your ${f.slot.label} stop.`;
+  const d = $("#spot-detail");
+  if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+}
+function closeSpotDetail(){ const d = $("#spot-detail"); if (d.close) d.close(); else d.removeAttribute("open"); }
+function addDetailToPlan(){
+  const s = spotById(detailId); if (!s) return;
+  const f = fitSlot(s); if (!f.slot) return;
+  P()[f.slot.id] = s.id;
+  fresh.add(f.slot.id);
+  closeSpotDetail();
+  showResults(false);
+  render();
+  toast(`Added to your ${f.slot.label} stop`);
+}
+$("#q").addEventListener("input", renderResults);
+$("#q").addEventListener("focus", () => {
+  if ($("#q").value.trim()) renderResults();
+  if (matchMedia("(max-width: 700px)").matches) setTimeout(() => { $("#search").scrollIntoView({block:"start", behavior:"smooth"}); setTimeout(fitResults, 350); }, 250);
+});
+$("#q").addEventListener("keydown", e => {
+  if (e.key === "Escape") { showResults(false); }
+  if (e.key === "Enter") { e.preventDefault(); $("#q").blur(); }
+});
+document.addEventListener("pointerdown", e => { if (!e.target.closest("#search") && !e.target.closest("#spot-detail")) showResults(false); });
+window.addEventListener("resize", fitResults);
+if (window.visualViewport) { visualViewport.addEventListener("resize", fitResults); visualViewport.addEventListener("scroll", fitResults); }
+$("#spot-detail").addEventListener("click", e => { if (e.target === e.currentTarget) closeSpotDetail(); });
+
 /* ---------- invite ---------- */
 const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
 const EMOJI = {food:"🍽", activity:"🎳", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
@@ -673,6 +812,10 @@ document.addEventListener("click", async e => {
   if (t.id === "roll") { roll(); return; }
   if (t.dataset.lock) { const k = t.dataset.lock; if (!spotById(P()[k])) { toast("Roll first, then lock"); return; } L()[k] = !L()[k]; render(); return; }
   if (t.dataset.clear) { P()[t.dataset.clear] = null; render(); return; }
+  if (t.id === "q-clear") { $("#q").value = ""; renderResults(); $("#q").focus(); return; }
+  if (t.dataset.qpick) { openSpotDetail(t.dataset.qpick); return; }
+  if (t.id === "detail-add") { addDetailToPlan(); return; }
+  if (t.id === "detail-close") { closeSpotDetail(); return; }
   if (t.id === "invite-open") { openInvite(); return; }
   if (t.dataset.inviteMode) { inviteMode = t.dataset.inviteMode; renderInvite(); return; }
   if (t.id === "invite-send") { sendInvite(); return; }
