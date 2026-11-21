@@ -143,6 +143,17 @@ pre.example{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:
 .x:hover{color:var(--accent)}
 .note{font-size:.85rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:20}
+/* Invite panel */
+dialog.invite{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:20px;padding:18px;width:min(460px,calc(100% - 32px));max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto}
+dialog.invite::backdrop{background:rgb(5 10 20 / .72)}
+.invite form{display:grid;gap:12px}
+.invite textarea{min-height:76px}
+.invite .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.choice button{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 8px;font-weight:700;color:var(--fg)}
+.choice button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel);color:var(--accent)}
+.invite pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:.85rem;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+.invite .row .btn{flex:1 1 auto}
 .saved .item{grid-template-columns:1fr auto}
 
 @media (max-width:520px){
@@ -284,6 +295,25 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
 
   <p class="note" id="status" hidden></p>
 </div>
+
+<dialog class="invite" id="invite" aria-labelledby="invite-title">
+  <form method="dialog" id="invite-form">
+    <h2 id="invite-title">Send the invite</h2>
+    <div class="field"><label for="inv-note">Personal note (optional)</label>
+      <textarea id="inv-note" rows="2" placeholder="Wear something nice. Can't wait to see you."></textarea></div>
+    <div class="two">
+      <div class="field"><label for="inv-time">Be ready by (optional)</label><input id="inv-time" type="time"></div>
+      <div class="field"><label for="inv-dress">Dress code (optional)</label>
+        <select id="inv-dress"><option value="">None</option><option value="casual">Casual</option><option value="dressy">Dressed up</option></select></div>
+    </div>
+    <div class="choice" role="group" aria-label="What to share">
+      <button type="button" data-invite-mode="show" aria-pressed="true">Show the plan</button>
+      <button type="button" data-invite-mode="surprise" aria-pressed="false">Keep it a surprise</button>
+    </div>
+    <div class="field"><span class="eyebrow">Preview</span><pre id="inv-preview"></pre></div>
+    <div class="row"><button type="button" class="btn primary" id="invite-send">Send</button><button type="button" class="btn ghost" id="invite-cancel">Cancel</button></div>
+  </form>
+</dialog>
 
 <script>
 const CATS = {
@@ -442,7 +472,8 @@ function renderPlan(){
   fresh.clear();
   el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : "Nothing picked yet"}</span></div>
     <ol class="stops">${rows}</ol>
-    <div class="row"><button class="btn primary small" id="copy-plan" ${chosen.length?"":"disabled"}>Copy plan to text</button>
+    <div class="row"><button class="btn primary small" id="invite-open" ${chosen.length?"":"disabled"}>Send the invite</button>
+    <button class="btn primary small" id="copy-plan" ${chosen.length?"":"disabled"}>Copy plan to text</button>
     <button class="btn small" id="save-plan" ${chosen.length && (db || local) ?"":"disabled"}>Save this night</button>
     <button class="btn ghost small" id="clear-plan" ${chosen.length?"":"disabled"}>Start over</button></div>`;
 }
@@ -512,6 +543,68 @@ async function copyPlan(){
   }
 }
 
+/* ---------- invite ---------- */
+const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
+const EMOJI = {food:"🍽", activity:"🎳", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
+let inviteMode = "show";
+function planDress(){
+  const d = chosenStops().filter(x => x.spot).map(x => x.spot.dress);
+  if (d.includes("dressy")) return "dressy";
+  return d.length && d.every(x => x === "casual") ? "casual" : "";
+}
+function timeWord(v){
+  const m = /^(\d{1,2}):(\d{2})/.exec(v || ""); if (!m) return "";
+  const h = Number(m[1]);
+  return `${h % 12 || 12}:${m[2]} ${h < 12 ? "AM" : "PM"}`;
+}
+function inviteText(){
+  const note = $("#inv-note").value.trim();
+  const ready = [timeWord($("#inv-time").value) && `Be ready by ${timeWord($("#inv-time").value)}`, dressWord($("#inv-dress").value) && `Dress: ${dressWord($("#inv-dress").value)}`].filter(Boolean).join(" · ");
+  let body;
+  if (inviteMode === "show") {
+    const stops = chosenStops().filter(x => x.spot).flatMap(({slot, spot}) => {
+      const label = slot.label === "Food" ? "Dinner" : slot.label;
+      const web = safeUrl(spot.website);
+      return [`${EMOJI[spot.category] || "📍"} ${label}: ${spot.name}`, ...(web ? [web] : [])];
+    });
+    body = ["Here's our night ✨", ...stops, ready];
+  } else {
+    body = ["I've got our night planned 😉", ready, "The rest is a surprise."];
+  }
+  return [note, body.filter(Boolean).join("\n"), `Planned with Magic City Nights 🌙 ${SITE_URL}`].filter(Boolean).join("\n\n");
+}
+function renderInvite(){
+  document.querySelectorAll("[data-invite-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.inviteMode === inviteMode));
+  $("#inv-preview").textContent = inviteText();
+}
+function openInvite(){
+  $("#inv-dress").value = planDress();
+  renderInvite();
+  const d = $("#invite");
+  if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+}
+function closeInvite(){ const d = $("#invite"); if (d.close) d.close(); else d.removeAttribute("open"); }
+function copyInvite(text){
+  const done = () => { closeInvite(); toast("Invite copied!"); };
+  const fallback = () => {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    $("#invite").appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch(_) {}
+    ta.remove();
+    if (ok) done(); else { $("#inv-preview").focus(); toast("Select the preview and copy it"); }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+}
+function sendInvite(){
+  const text = inviteText();
+  if (navigator.share) {
+    navigator.share({text}).then(closeInvite, e => { if (!e || e.name !== "AbortError") copyInvite(text); });
+  } else copyInvite(text);
+}
+$("#invite-form").addEventListener("input", renderInvite);
+$("#invite-form").addEventListener("submit", e => e.preventDefault());
+$("#invite").addEventListener("click", e => { if (e.target === e.currentTarget) closeInvite(); });
+
 function catWord(w){
   w = w.toLowerCase().replace(/[:\s]+$/,"").trim();
   if (/^(brunch|breakfast|breakfast and brunch|brunch spots?)$/.test(w)) return "brunch";
@@ -578,6 +671,10 @@ document.addEventListener("click", async e => {
   if (t.id === "roll") { roll(); return; }
   if (t.dataset.lock) { const k = t.dataset.lock; if (!spotById(P()[k])) { toast("Roll first, then lock"); return; } L()[k] = !L()[k]; render(); return; }
   if (t.dataset.clear) { P()[t.dataset.clear] = null; render(); return; }
+  if (t.id === "invite-open") { openInvite(); return; }
+  if (t.dataset.inviteMode) { inviteMode = t.dataset.inviteMode; renderInvite(); return; }
+  if (t.id === "invite-send") { sendInvite(); return; }
+  if (t.id === "invite-cancel") { closeInvite(); return; }
   if (t.id === "copy-plan") { copyPlan(); return; }
   if (t.id === "clear-plan") { picks[outing] = {}; locks[outing] = {}; render(); return; }
   if (t.id === "save-plan" && (db || local)) {
