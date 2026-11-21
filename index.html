@@ -236,7 +236,7 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
   <section id="view-surprise" hidden>
     <div class="roll">
       <h2 id="roll-title">Can't decide?</h2>
-      <p>Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.</p>
+      <p id="roll-text">Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.</p>
       <button class="btn primary" id="roll">🎲 Roll it</button>
     </div>
   </section>
@@ -327,17 +327,17 @@ const CATS = {
   brunch:{label:"Brunch", plural:"Brunch spots"},
 };
 const OUTINGS = {
-  date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", text:"Date night in Birmingham",
+  date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", rollText:"Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.", text:"Date night in Birmingham",
     slots:[{id:"food",label:"Food",cats:["food"]},{id:"activity",label:"Activity",cats:["activity"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
-  girls:{name:"Girls night out", headline:"Plan a <em>girls night</em> out", sub:"Dinner with the ladies, something fun, drinks, then the lounge.", roll:"Ladies can't decide?", text:"Girls night out in Birmingham",
+  girls:{name:"Girls night out", headline:"Plan a <em>Birmingham</em> girls' night", sub:"Pick your spots, or let it surprise you. Dinner, something to do, drinks, then a lounge.", roll:"Can't decide on a girls' night?", rollText:"Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.", text:"Girls night out in Birmingham",
     slots:[{id:"dinner",label:"Dinner",cats:["food"]},{id:"fun",label:"Activity",cats:["activity"]},{id:"drinks",label:"Drinks",cats:["bar"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
-  bars:{name:"Bar hoppers", headline:"Plan a <em>bar hop</em>", sub:"Three bars, then last call at a bar or lounge. No repeats.", roll:"Let the night pick the bars", text:"Bar hop in Birmingham",
+  bars:{name:"Bar hoppers", headline:"Plan a <em>Birmingham</em> bar hop", sub:"Pick your spots, or let it surprise you. A first bar, a second bar, a third bar, then last call at a bar or lounge.", roll:"Can't decide on a bar hop?", rollText:"Roll the whole bar hop from your spots. Lock the ones you like and roll again to swap the rest.", text:"Bar hop in Birmingham",
     slots:[{id:"bar1",label:"First stop",cats:["bar"]},{id:"bar2",label:"Second stop",cats:["bar"]},{id:"bar3",label:"Third stop",cats:["bar"]},{id:"last",label:"Last call",cats:["bar","lounge"]}]},
-  coffee:{name:"Coffee date", headline:"Plan a <em>coffee</em> date", sub:"Start with coffee, do something fun, grab a bite, end on something sweet.", roll:"Let the day pick the coffee", text:"Coffee date in Birmingham",
+  coffee:{name:"Coffee date", headline:"Find a <em>Birmingham</em> coffee date", sub:"Pick your spots, or let it surprise you. Coffee, something to do, a bite to eat, then a sweet treat.", roll:"Can't decide on a coffee date?", rollText:"Roll the whole date from your spots. Lock the ones you like and roll again to swap the rest.", text:"Coffee date in Birmingham",
     slots:[{id:"coffee",label:"Coffee",cats:["coffee"]},{id:"do",label:"Something to do",cats:["activity"]},{id:"bite",label:"Bite to eat",cats:["food","brunch"]},{id:"treat",label:"Sweet treat",cats:["dessert"]}]},
-  brunch:{name:"Brunch date", headline:"Plan a <em>brunch</em> date", sub:"Brunch first, something fun after, then coffee or something sweet.", roll:"Let the morning pick", text:"Brunch date in Birmingham",
+  brunch:{name:"Brunch date", headline:"Plan a <em>Birmingham</em> brunch date", sub:"Pick your spots, or let it surprise you. Brunch, something to do, then coffee or a sweet treat.", roll:"Can't decide on a brunch date?", rollText:"Roll the whole date from your spots. Lock the ones you like and roll again to swap the rest.", text:"Brunch date in Birmingham",
     slots:[{id:"brunch",label:"Brunch",cats:["brunch"]},{id:"do",label:"Something to do",cats:["activity"]},{id:"after",label:"Coffee or treat",cats:["coffee","dessert"]}]},
-  sun:{name:"Sun up to sundown", headline:"Sun up to <em>sundown</em>", sub:"The whole day out: brunch, something to do, dinner, dessert, an evening plan, then a bar or lounge to close it out.", roll:"Let the whole day pick itself", text:"Sun up to sundown in Birmingham",
+  sun:{name:"Sun up to sundown", headline:"Plan a full <em>Birmingham</em> day", sub:"Pick your spots, or let it surprise you. Brunch, a morning activity, food, dessert, an evening activity, then a bar or lounge.", roll:"Can't decide on a full day?", rollText:"Roll the whole day from your spots. Lock the ones you like and roll again to swap the rest.", text:"Sun up to sundown in Birmingham",
     slots:[{id:"brunch",label:"Brunch",cats:["brunch"]},{id:"morning",label:"Morning activity",cats:["activity"]},{id:"food",label:"Food",cats:["food"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"evening",label:"Evening activity",cats:["activity"]},{id:"close",label:"Bar or lounge",cats:["bar","lounge"]}]},
 };
 const SAMPLES = [
@@ -419,6 +419,7 @@ function renderHeader(){
   $("#headline").innerHTML = O().headline;
   $("#subline").textContent = O().sub;
   $("#roll-title").textContent = O().roll;
+  $("#roll-text").textContent = O().rollText;
   document.querySelectorAll(".outing").forEach(b => b.setAttribute("aria-pressed", b.dataset.outing === outing));
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
