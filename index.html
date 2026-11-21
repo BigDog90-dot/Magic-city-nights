@@ -1,8 +1,26 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Magic City Nights</title>
+<meta name="description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta name="theme-color" content="#F6F3F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141020" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Magic City Nights">
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23C2336B'/%3E%3Cpath d='M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;padding:0}
+img{max-width:100%}
+</style>
 <style>
 /* Layout: one phone-first column. Outing switcher, filters, three tabs (Build, Surprise, My Spots), plan card under the picker. */
 :root{
@@ -136,7 +154,23 @@ pre.example{background:var(--surface-2);border-radius:10px;padding:10px 12px;fon
   .stop.fresh{animation:pop .35s ease}
   @keyframes pop{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
 }
+/* Phones: 16px fields stop iOS from zooming in on tap; bigger tap targets; no double-tap zoom delay */
+select,input,textarea{font-size:16px}
+button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.rail{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.x{min-height:40px}
+.lock{min-height:38px}
+.links a{display:inline-block;padding-block:4px}
+@media (max-width:520px){
+  .wrap{padding-block:14px 40px;gap:16px}
+  .spot{width:min(68vw,200px)}
+  .plan,.card{padding:16px}
+  .btn{padding:12px 16px}
+  .plan .row .btn{flex:1 1 auto}
+}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -293,6 +327,11 @@ let mood = "";
 let grown = false;
 let editing = null;
 let db = null, dbReady = false, fresh = new Set();
+// Website mode: with no Claude database, spots and saved nights live in this browser.
+const LOCAL_KEY = "mcn-data-v1";
+let local = false;
+const newId = () => "local-" + Math.random().toString(36).slice(2);
+function saveLocal(){ if (!local) return; try { localStorage.setItem(LOCAL_KEY, JSON.stringify({spots, nights})); } catch(e) {} }
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -398,7 +437,7 @@ function renderPlan(){
   el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : "Nothing picked yet"}</span></div>
     <ol class="stops">${rows}</ol>
     <div class="row"><button class="btn primary small" id="copy-plan" ${chosen.length?"":"disabled"}>Copy plan to text</button>
-    <button class="btn small" id="save-plan" ${chosen.length && db ?"":"disabled"}>Save this night</button>
+    <button class="btn small" id="save-plan" ${chosen.length && (db || local) ?"":"disabled"}>Save this night</button>
     <button class="btn ghost small" id="clear-plan" ${chosen.length?"":"disabled"}>Start over</button></div>`;
 }
 
@@ -407,7 +446,7 @@ function renderSpots(){
   const list = $("#spot-list");
   if (!spots.length) {
     list.innerHTML = `<div style="display:grid;gap:10px"><p class="hint">No spots yet. Add them above or paste your whole list. Want to see how it works first? Load a few sample spots, then delete them when you add your real ones.</p>
-      <div class="row"><button class="btn small" id="load-samples" ${db?"":"disabled"}>Load sample spots</button></div></div>`;
+      <div class="row"><button class="btn small" id="load-samples" ${db || local ?"":"disabled"}>Load sample spots</button></div></div>`;
     return;
   }
   const hasSamples = spots.some(s => s.sample);
@@ -508,7 +547,7 @@ function parseBulk(text){
 }
 
 async function addSpots(list){
-  if (!db) { for (const s of list) spots.push({...s, id:"local-" + Math.random().toString(36).slice(2)}); render(); return list.length; }
+  if (!db) { for (const s of list) spots.push({...s, id:newId()}); saveLocal(); render(); return list.length; }
   let n = 0;
   for (const s of list) {
     try { await db.collection("spots").add({...s, addedAt:new Date().toISOString()}); n++; }
@@ -517,7 +556,7 @@ async function addSpots(list){
   return n;
 }
 async function removeSpot(id){
-  if (!db || id.startsWith("local-")) { spots = spots.filter(s => s.id !== id); render(); return; }
+  if (!db || id.startsWith("local-")) { spots = spots.filter(s => s.id !== id); saveLocal(); render(); return; }
   try { await db.doc("spots/" + id).delete(); } catch(e) { toast("Couldn't delete that one. Try again."); }
 }
 
@@ -535,8 +574,9 @@ document.addEventListener("click", async e => {
   if (t.dataset.clear) { P()[t.dataset.clear] = null; render(); return; }
   if (t.id === "copy-plan") { copyPlan(); return; }
   if (t.id === "clear-plan") { picks[outing] = {}; locks[outing] = {}; render(); return; }
-  if (t.id === "save-plan" && db) {
+  if (t.id === "save-plan" && (db || local)) {
     const stops = chosenStops().filter(x => x.spot).map(({slot, spot}) => ({slot:slot.id, id:spot.id, name:spot.name}));
+    if (!db) { nights.push({id:newId(), outing, stops, savedAt:new Date().toISOString()}); saveLocal(); renderSaved(); toast("Saved"); return; }
     try { await db.collection("dates").add({outing, stops, savedAt:new Date().toISOString()}); toast("Saved"); } catch(_) { toast("Couldn't save. Try again."); }
     return;
   }
@@ -553,6 +593,7 @@ document.addEventListener("click", async e => {
     }
     tab = "build"; render(); window.scrollTo({top:0, behavior:"smooth"}); return;
   }
+  if (t.dataset.delnight && !db) { nights = nights.filter(n => n.id !== t.dataset.delnight); saveLocal(); renderSaved(); return; }
   if (t.dataset.delnight && db) { try { await db.doc("dates/" + t.dataset.delnight).delete(); } catch(_) { toast("Couldn't delete. Try again."); } return; }
   if (t.id === "bulk-add") {
     const list = parseBulk($("#bulk").value);
@@ -575,7 +616,7 @@ document.addEventListener("submit", async e => {
   e.preventDefault();
   const id = f.dataset.savelinks, website = safeUrl($("#e-web").value.trim()), reserve = safeUrl($("#e-res").value.trim());
   if (($("#e-web").value.trim() && !website) || ($("#e-res").value.trim() && !reserve)) { toast("Links need to start with https://"); return; }
-  if (!db || id.startsWith("local-")) { Object.assign(spotById(id) || {}, {website, reserve}); editing = null; render(); return; }
+  if (!db || id.startsWith("local-")) { Object.assign(spotById(id) || {}, {website, reserve}); editing = null; saveLocal(); render(); return; }
   try { await db.doc("spots/" + id).update({website, reserve}); editing = null; toast("Links saved"); renderSpots(); } catch(_) { toast("Couldn't save the links. Try again."); }
 });
 for (const id of ["#f-budget","#f-area","#f-setting","#f-dress"]) $(id).addEventListener("change", render);
@@ -586,7 +627,19 @@ render();
 (async () => {
   const timer = setTimeout(() => { if (!dbReady) status("Your spots are taking a while to load. They'll show up once the connection catches up."); }, 10000);
   try { db = window.claude ? await window.claude.use("db") : null; } catch(e) { db = null; }
-  if (!db) { clearTimeout(timer); status("Saving isn't available in this view. Spots you add here last until you close the page."); render(); return; }
+  if (!db) {
+    clearTimeout(timer);
+    local = true;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null"); } catch(e) {}
+    if (saved && Array.isArray(saved.spots)) {
+      spots = saved.spots; nights = Array.isArray(saved.nights) ? saved.nights : [];
+    } else {
+      try { const r = await fetch("spots.json", {cache:"no-cache"}); if (r.ok) spots = await r.json(); } catch(e) {}
+    }
+    status("Spots and nights you change save in this browser on this device.");
+    render(); return;
+  }
   db.collection("spots").onSnapshot(snap => {
     spots = snap.docs.map(d => ({id:d.id, ...d.data()}));
     if (!snap.metadata.fromCache) {
