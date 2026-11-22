@@ -72,6 +72,13 @@ button{cursor:pointer}
 .mood .lbl{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-right:2px}
 .mood button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem}
 .mood button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.cuisines{display:grid;gap:8px}
+.cuisines .lbl{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.cuisines .lbl small{font-weight:600;text-transform:none;letter-spacing:0}
+.cuisines .chips{display:flex;flex-wrap:wrap;gap:8px}
+.cuisines .chips::-webkit-scrollbar{display:none}
+.cuisines button{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.9rem;white-space:nowrap}
+.cuisines button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .mood .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
 @media (max-width:520px){.mood .sep{display:none}.mood{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .mood button.grown[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
@@ -173,7 +180,8 @@ dialog.invite::backdrop{background:rgb(5 10 20 / .72)}
 .choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .choice button{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 8px;font-weight:700;color:var(--fg)}
 .choice button[aria-pressed="true"]{border-color:var(--accent);background:var(--sel);color:var(--accent)}
-.invite pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:.85rem;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+.invite .bubble-wrap{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px 12px;display:flex;justify-content:flex-end}
+.invite pre{margin:0;max-width:88%;background:#0A84FF;color:#fff;border-radius:18px 18px 4px 18px;padding:10px 14px;font:inherit;font-size:.92rem;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
 .invite .row .btn{flex:1 1 auto}
 .saved .item{grid-template-columns:1fr auto}
 
@@ -207,6 +215,25 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
   .btn{padding:12px 16px}
   .plan .row .btn{flex:1 1 auto}
 }
+/* Shared plan page (opened from an invite link) */
+body.shared .wrap > :not(header):not(#shared){display:none !important}
+body.shared #headline, body.shared #subline{display:none}
+#shared{display:grid;gap:34px}
+.sh-top{display:grid;gap:14px}
+.sh-top h1{font-size:clamp(2rem,8vw,2.6rem);line-height:1.1}
+.sh-chips{display:flex;flex-wrap:wrap;gap:10px}
+.sh-chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:.95rem}
+.sh-sec{display:grid;gap:18px}
+.sh-sec h2{font-family:var(--serif);font-size:1.05rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sh-stop{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--accent));border-radius:18px;padding:20px;display:grid;gap:10px}
+.sh-kind{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sh-name{font-family:var(--serif);font-size:1.4rem;line-height:1.2;color:var(--fg)}
+.sh-where{color:var(--muted);font-size:.95rem;line-height:1.5}
+.sh-links{display:flex;flex-wrap:wrap;gap:10px;padding-top:6px}
+.sh-links a{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;font-weight:700;font-size:.92rem}
+.sh-links a.go{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.sh-foot{display:grid;gap:12px;justify-items:center;text-align:center;padding-top:10px;color:var(--muted)}
+.sh-foot a{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
@@ -217,6 +244,8 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
     <h1 id="headline">Build a <em>Birmingham</em> date</h1>
     <p class="sub" id="subline">Pick your spots, or let it surprise you.</p>
   </header>
+
+  <section id="shared" hidden aria-live="polite"></section>
 
   <section class="outings" aria-label="Kind of night">
     <button class="outing" data-outing="date" aria-pressed="true"><b>Date night</b><span>Food, activity, dessert, lounge</span></button>
@@ -242,6 +271,11 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
       <button type="button" class="search-x" id="q-clear" aria-label="Clear search" hidden>×</button>
     </div>
     <div class="search-results" id="q-results" role="listbox" aria-label="Matching spots" hidden></div>
+  </section>
+
+  <section class="cuisines" aria-label="Food type">
+    <span class="lbl">Food type <small>· pick one or more</small></span>
+    <div class="chips" id="cuisine-chips" role="group" aria-label="Food type"></div>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -280,6 +314,8 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
         <div class="field full"><label for="a-name">Name</label><input id="a-name" required placeholder="Place name"></div>
         <div class="field"><label for="a-cat">Category</label>
           <select id="a-cat"><option value="food">Food</option><option value="activity">Activity</option><option value="dessert">Dessert</option><option value="bar">Bar</option><option value="lounge">Lounge</option><option value="coffee">Coffee shop</option><option value="brunch">Brunch</option></select></div>
+        <div class="field" id="a-cuisine-field"><label for="a-cuisine">Food type</label>
+          <select id="a-cuisine"><option value="">Not sure</option></select></div>
         <div class="field"><label for="a-price">Price</label>
           <select id="a-price"><option value="1">$</option><option value="2" selected>$$</option><option value="3">$$$</option><option value="4">$$$$</option></select></div>
         <div class="field"><label for="a-area">Area</label><input id="a-area" placeholder="Southside, Avondale…" list="areas-list"></div>
@@ -341,7 +377,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
       <button type="button" data-invite-mode="show" aria-pressed="true">Show the plan</button>
       <button type="button" data-invite-mode="surprise" aria-pressed="false">Keep it a surprise</button>
     </div>
-    <div class="field"><span class="eyebrow">Preview</span><pre id="inv-preview"></pre></div>
+    <div class="field"><span class="eyebrow">How it'll look in a text</span><div class="bubble-wrap"><pre id="inv-preview" tabindex="-1"></pre></div></div>
     <div class="row"><button type="button" class="btn primary" id="invite-send">Send</button><button type="button" class="btn ghost" id="invite-cancel">Cancel</button></div>
   </form>
 </dialog>
@@ -367,6 +403,10 @@ const CATS = {
   lounge:{label:"Lounge", plural:"Lounges"},
   coffee:{label:"Coffee", plural:"Coffee shops"},
   brunch:{label:"Brunch", plural:"Brunch spots"},
+};
+const CUISINES = {
+  soul:"🍗 Soul & Southern", bbq:"🔥 BBQ", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
+  italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American"
 };
 const OUTINGS = {
   date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", rollText:"Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.", text:"Date night in Birmingham",
@@ -404,6 +444,7 @@ let locks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};
 let tab = "build";
 let mood = "";
 let grown = false;
+let cuisines = [];   // food types picked; empty means all food
 let editing = null;
 let db = null, dbReady = false, fresh = new Set();
 // Website mode: with no Claude database, spots and saved nights live in this browser.
@@ -417,7 +458,8 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const money = n => "$".repeat(Math.max(1, Math.min(4, Number(n)||2)));
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
-const metaLine = s => [money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const cuisineWord = s => s.category === "food" && CUISINES[s.cuisine] ? CUISINES[s.cuisine].replace(/^\S+\s/, "") : "";
+const metaLine = s => [cuisineWord(s), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -436,8 +478,9 @@ try {
   if (s.tab) tab = s.tab;
   if (s.mood === "social" || s.mood === "lowkey") mood = s.mood;
   grown = !!s.grown;
+  if (Array.isArray(s.cuisines)) cuisines = s.cuisines.filter(k => CUISINES[k]);
 } catch(e) {}
-function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown})); } catch(e) {} }
+function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines})); } catch(e) {} }
 
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
 function passes(s){
@@ -448,6 +491,8 @@ function passes(s){
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
   if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
   if (grown && !s.grown) return false;
+  // Food type only narrows restaurants; dessert, bars and the rest aren't affected.
+  if (cuisines.length && s.category === "food" && !cuisines.includes(s.cuisine)) return false;
   return true;
 }
 const spotById = id => spots.find(s => s.id === id);
@@ -472,6 +517,15 @@ function renderHeader(){
   $("#grown-toggle").setAttribute("aria-pressed", grown);
 }
 
+function renderCuisines(){
+  const have = new Set(spots.filter(s => s.category === "food" && s.cuisine).map(s => s.cuisine));
+  const keys = Object.keys(CUISINES).filter(k => have.has(k) || cuisines.includes(k));
+  const row = $("#cuisine-chips"), x = row.scrollLeft;
+  row.innerHTML = `<button data-cuisine="" aria-pressed="${!cuisines.length}">All food</button>` +
+    keys.map(k => `<button data-cuisine="${k}" aria-pressed="${cuisines.includes(k)}">${CUISINES[k]}</button>`).join("");
+  row.scrollLeft = x;
+}
+
 function renderAreas(){
   const areas = [...new Set(spots.map(s => (s.area||"").trim()).filter(Boolean))].sort();
   const sel = $("#f-area"), cur = sel.value;
@@ -480,7 +534,10 @@ function renderAreas(){
 }
 
 function renderBuild(){
-  $("#view-build").innerHTML = O().slots.map(slot => {
+  const view = $("#view-build");
+  const keep = {};
+  view.querySelectorAll(".rail[data-rail]").forEach(r => { keep[r.dataset.rail] = r.scrollLeft; });
+  view.innerHTML = O().slots.map(slot => {
     const all = spots.filter(s => slot.cats.includes(s.category));
     const taken = takenElsewhere(slot.id);
     const list = all.filter(s => passes(s) && !taken.has(s.id));
@@ -491,6 +548,7 @@ function renderBuild(){
       : `<div class="empty-rail">${all.length ? (all.every(s => taken.has(s.id)) ? `Add more ${word} so this stop has its own pick.` : "Nothing here fits your filters.") : `No ${word} yet. Add some in <b>My spots</b>.`}</div>`;
     return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail" data-rail="${outing}-${slot.id}">${body}</div></div>`;
   }).join("");
+  view.querySelectorAll(".rail[data-rail]").forEach(r => { if (keep[r.dataset.rail]) r.scrollLeft = keep[r.dataset.rail]; });
 }
 
 function chosenStops(){ return O().slots.map(slot => ({slot, spot: spotById(P()[slot.id])})); }
@@ -554,7 +612,7 @@ function renderSaved(){
 
 /* Re-rendering replaces buttons and rows, so remember where the viewer was and put it back:
    page scroll, each row's sideways scroll, and which control had focus. */
-const FOCUS_KEYS = ["slot","id","lock","clear","mood","outing","qpick","editlinks","del","load","delnight"];
+const FOCUS_KEYS = ["slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
 function focusKey(el){
   if (!el || el === document.body || !document.contains(el)) return null;
   if (el.id) return "#" + CSS.escape(el.id);
@@ -579,7 +637,7 @@ function render(){
       $("#tab-"+t).setAttribute("aria-selected", tab === t);
       $("#view-"+t).hidden = tab !== t;
     }
-    renderHeader(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+    renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
   });
   remember();
 }
@@ -621,7 +679,7 @@ let detailId = null;
 const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’`]/g, "");
 function haystack(s){
   const c = CATS[s.category] || {};
-  return norm([s.name, s.area, c.label, c.plural, s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -715,7 +773,34 @@ $("#spot-detail").addEventListener("click", e => { if (e.target === e.currentTar
 
 /* ---------- invite ---------- */
 const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
-const EMOJI = {food:"🍽", activity:"🎳", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
+const EMOJI = {food:"🍽️", activity:"🎟️", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
+const ACTIVITY_EMOJI = [
+  [/comedy|improv|stand.?up/i, "🎭"], [/danc|salsa|ballroom/i, "💃"], [/cook|culinary|chef/i, "👩‍🍳"],
+  [/jazz|concert|music|live band|symphony/i, "🎶"], [/movie|theat|cinema|film/i, "🎬"], [/bowl/i, "🎳"],
+  [/paint|pottery|ceramic|art class/i, "🎨"], [/museum|gallery|\bart\b/i, "🖼️"], [/arcade|game|escape/i, "🕹️"],
+  [/golf|topgolf/i, "⛳"], [/axe/i, "🪓"], [/skat/i, "⛸️"], [/zoo|garden|park|hike|trail|walk/i, "🌳"], [/spa|massage/i, "💆"]
+];
+function stopEmoji(spot){
+  if (spot.category === "activity") {
+    const text = `${spot.name} ${spot.note || ""}`;
+    const hit = ACTIVITY_EMOJI.find(([re]) => re.test(text));
+    if (hit) return hit[1];
+  }
+  return EMOJI[spot.category] || "📍";
+}
+const SECTION_TIMES = {
+  date:{food:"Evening", activity:"Evening", dessert:"Evening", lounge:"Late night"},
+  girls:{dinner:"Evening", fun:"Evening", drinks:"Late night", lounge:"Late night"},
+  bars:{bar1:"Late night", bar2:"Late night", bar3:"Late night", last:"Late night"},
+  coffee:{coffee:"Morning", do:"Morning", bite:"Morning", treat:"Morning"},
+  brunch:{brunch:"Morning", do:"Morning", after:"Morning"},
+  sun:{brunch:"Morning", morning:"Morning", food:"Evening", dessert:"Evening", evening:"Evening", close:"Late night"}
+};
+const SECTION_ICON = {"Morning":"☀️", "Evening":"🌆", "Late night":"🌙"};
+function stopLabel(slot){
+  if (slot.label === "Food") return "Dinner";
+  return slot.label.replace(/^(Morning|Evening) activity$/, "Activity");
+}
 let inviteMode = "show";
 function planDress(){
   const d = chosenStops().filter(x => x.spot).map(x => x.spot.dress);
@@ -729,19 +814,41 @@ function timeWord(v){
 }
 function inviteText(){
   const note = $("#inv-note").value.trim();
-  const ready = [timeWord($("#inv-time").value) && `Be ready by ${timeWord($("#inv-time").value)}`, dressWord($("#inv-dress").value) && `Dress: ${dressWord($("#inv-dress").value)}`].filter(Boolean).join(" · ");
-  let body;
+  const timeVal = $("#inv-time").value;
+  const readyAt = timeWord(timeVal);
+  const dress = dressWord($("#inv-dress").value);
+  const times = SECTION_TIMES[outing] || {};
+  const stops = chosenStops().filter(x => x.spot);
+  const hour = /^(\d{1,2})/.test(timeVal || "") ? Number(timeVal.slice(0, 2)) : null;
+  const startsMorning = stops.length && times[stops[0].slot.id] === "Morning";
+  const when = (hour !== null ? hour < 12 : startsMorning) ? "day" : "night";
+  const details = [readyAt && `⏰ Be ready by ${readyAt}`, dress && `👗 Dress: ${dress[0].toUpperCase() + dress.slice(1)}`].filter(Boolean).join("\n");
+  const parts = [note];
   if (inviteMode === "show") {
-    const stops = chosenStops().filter(x => x.spot).flatMap(({slot, spot}) => {
-      const label = slot.label === "Food" ? "Dinner" : slot.label;
-      const web = safeUrl(spot.website);
-      return [`${EMOJI[spot.category] || "📍"} ${label}: ${spot.name}`, ...(web ? [web] : [])];
-    });
-    body = ["Here's our night ✨", ...stops, ready];
+    const groups = [];
+    for (const {slot, spot} of stops) {
+      const sec = times[slot.id] || "Evening";
+      if (!groups.length || groups[groups.length - 1].sec !== sec) groups.push({sec, lines: []});
+      groups[groups.length - 1].lines.push(`${stopEmoji(spot)} ${stopLabel(slot)} — ${spot.name}`);
+    }
+    parts.push(`Here's our ${when} ✨`);
+    if (groups.length > 1) groups.forEach(g => parts.push(`${SECTION_ICON[g.sec]} ${g.sec.toUpperCase()}\n${g.lines.join("\n\n")}`));
+    else if (groups.length) parts.push(groups[0].lines.join("\n\n"));
+    parts.push(details, `See our full plan 👇\n${planLink(timeVal, $("#inv-dress").value)}`);
   } else {
-    body = ["I've got our night planned 😉", ready, "The rest is a surprise."];
+    parts.push(`I've got our ${when} planned 😉\nThe rest is a surprise.`, details, `Planned with Magic City Nights 🌙\n${SITE_URL}`);
   }
-  return [note, body.filter(Boolean).join("\n"), `Planned with Magic City Nights 🌙 ${SITE_URL}`].filter(Boolean).join("\n\n");
+  return parts.filter(Boolean).join("\n\n\n");
+}
+/* A link that carries the plan itself, so whoever opens it sees the same night. Starter spots go by id;
+   spots someone added themselves carry their details. */
+function b64url(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function unb64url(str){ str = str.replace(/-/g,"+").replace(/_/g,"/"); while (str.length % 4) str += "="; return decodeURIComponent(escape(atob(str))); }
+function planLink(timeVal, dress){
+  const st = chosenStops().filter(x => x.spot).map(({slot, spot}) => [slot.id, /^s-/.test(spot.id) ? spot.id :
+    {n:spot.name, c:spot.category, a:spot.area || "", d:spot.address || "", w:safeUrl(spot.website), r:safeUrl(spot.reserve)}]);
+  const data = {o:outing, s:st}; if (timeVal) data.t = timeVal; if (dress) data.d = dress;
+  return SITE_URL + "?plan=" + b64url(JSON.stringify(data));
 }
 function renderInvite(){
   document.querySelectorAll("[data-invite-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.inviteMode === inviteMode));
@@ -835,6 +942,11 @@ document.addEventListener("click", async e => {
   if (t.dataset.outing) { outing = t.dataset.outing; render(); return; }
   if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
   if (t.id === "grown-toggle") { grown = !grown; render(); return; }
+  if (t.dataset.cuisine !== undefined) {
+    const k = t.dataset.cuisine;
+    cuisines = !k ? [] : cuisines.includes(k) ? cuisines.filter(x => x !== k) : [...cuisines, k];
+    render(); return;
+  }
   if (t.dataset.editlinks !== undefined) { editing = t.dataset.editlinks || null; keepView(renderSpots); return; }
   if (t.matches(".tab")) { tab = t.id.replace("tab-",""); render(); return; }
   if (t.matches(".spot")) { const k = t.dataset.slot; P()[k] = P()[k] === t.dataset.id ? null : t.dataset.id; render(); return; }
@@ -885,6 +997,7 @@ $("#add-form").addEventListener("submit", async e => {
   e.preventDefault();
   const name = $("#a-name").value.trim(); if (!name) return;
   const spot = {name, category:$("#a-cat").value, price:Number($("#a-price").value), area:$("#a-area").value.trim(), setting:$("#a-setting").value, dress:$("#a-dress").value, mood:$("#a-mood").value, grown:$("#a-grown").checked, website:safeUrl($("#a-web").value.trim()), reserve:safeUrl($("#a-res").value.trim()), address:$("#a-address").value.trim(), note:$("#a-note").value.trim()};
+  if (spot.category === "food" && $("#a-cuisine").value) spot.cuisine = $("#a-cuisine").value;
   const n = await addSpots([spot]);
   if (n) { toast(`Added ${name}`); for (const id of ["#a-name","#a-address","#a-note","#a-web","#a-res"]) $(id).value = ""; $("#a-grown").checked = false; $("#a-name").focus(); }
 });
@@ -921,7 +1034,8 @@ render();
           let changed = false;
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
-            for (const k of ["website","reserve","address","area"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
           }
           // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
           // because every starter id goes on the "seen" list once it has been offered.
@@ -956,6 +1070,56 @@ render();
     render();
   }, () => { clearTimeout(timer); status("Your spots couldn't load right now. Reopen the page in a bit."); });
   db.collection("dates").onSnapshot(snap => { nights = snap.docs.map(d => ({id:d.id, ...d.data()})); renderSaved(); }, () => {});
+})();
+
+$("#a-cuisine").innerHTML += Object.entries(CUISINES).map(([k, v]) => `<option value="${k}">${v.replace(/^\S+\s/, "")}</option>`).join("");
+const syncCuisineField = () => { $("#a-cuisine-field").hidden = $("#a-cat").value !== "food"; };
+$("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
+
+/* ---------- shared plan page ---------- */
+(async () => {
+  let data = null;
+  try { const raw = new URLSearchParams(location.search).get("plan"); if (raw) data = JSON.parse(unb64url(raw)); } catch(e) { data = null; }
+  if (!data || !OUTINGS[data.o] || !Array.isArray(data.s)) return;
+  document.body.classList.add("shared");
+  const box = $("#shared"); box.hidden = false;
+  box.innerHTML = `<p class="hint">Loading the plan…</p>`;
+  let starter = new Map();
+  try { const r = await fetch("spots.json", {cache:"no-cache"}); if (r.ok) starter = new Map((await r.json()).map(x => [x.id, x])); } catch(e) {}
+  const o = OUTINGS[data.o], times = SECTION_TIMES[data.o] || {};
+  const stops = data.s.map(([slotId, v]) => {
+    const slot = o.slots.find(x => x.id === slotId); if (!slot) return null;
+    const spot = typeof v === "string" ? starter.get(v)
+      : v && v.n ? {name:v.n, category:v.c, area:v.a, address:v.d, website:v.w, reserve:v.r} : null;
+    return spot ? {slot, spot} : null;
+  }).filter(Boolean);
+  if (!stops.length) { box.innerHTML = `<p class="hint">This plan couldn't be opened. Ask for the invite again.</p>`; return; }
+  const hour = /^(\d{1,2})/.test(data.t || "") ? Number(data.t.slice(0, 2)) : null;
+  const when = (hour !== null ? hour < 12 : times[stops[0].slot.id] === "Morning") ? "day" : "night";
+  const chips = [data.t && `⏰ Be ready by ${timeWord(data.t)}`, dressWord(data.d) && `👗 ${dressWord(data.d)[0].toUpperCase() + dressWord(data.d).slice(1)}`].filter(Boolean);
+  const groups = [];
+  for (const x of stops) {
+    const sec = times[x.slot.id] || "Evening";
+    if (!groups.length || groups[groups.length - 1].sec !== sec) groups.push({sec, items: []});
+    groups[groups.length - 1].items.push(x);
+  }
+  const card = ({slot, spot: s}) => {
+    const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+    const where = [s.address, s.area].filter(Boolean).map(esc).join(" · ");
+    return `<article class="sh-stop" style="--c:${color(s.category)}">
+      <span class="sh-kind">${stopEmoji(s)} ${esc(stopLabel(slot))}</span>
+      <span class="sh-name">${esc(s.name)}</span>
+      ${where ? `<span class="sh-where">${where}</span>` : ""}
+      <span class="sh-links"><a class="go" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions</a>
+      ${safeUrl(s.reserve) ? `<a href="${esc(s.reserve)}" target="_blank" rel="noopener">Reservation</a>` : ""}
+      ${safeUrl(s.website) ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">Website</a>` : ""}</span>
+    </article>`;
+  };
+  box.innerHTML = `<div class="sh-top"><h1>Here's our <em>${when}</em> ✨</h1>
+      ${chips.length ? `<div class="sh-chips">${chips.map(c => `<span class="sh-chip">${esc(c)}</span>`).join("")}</div>` : ""}</div>
+    ${groups.map(g => `<section class="sh-sec">${groups.length > 1 ? `<h2>${SECTION_ICON[g.sec]} ${g.sec}</h2>` : ""}${g.items.map(card).join("")}</section>`).join("")}
+    <div class="sh-foot"><span>Planned with Magic City Nights 🌙</span><a href="${esc(SITE_URL)}">Plan your own night →</a></div>`;
+  document.title = `Our ${when} · Magic City Nights`;
 })();
 </script>
 
