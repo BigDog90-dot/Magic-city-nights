@@ -150,6 +150,39 @@ pre.example{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:
 .x:hover{color:var(--accent)}
 .note{font-size:.85rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:20}
+/* Pull down to reset */
+html{overscroll-behavior-y:contain}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:30;transform:translate(-50%,-90px);display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-weight:700;font-size:.9rem;box-shadow:0 10px 26px rgb(0 0 0 / .45);opacity:0;pointer-events:none;will-change:transform,opacity}
+.ptr .ptr-icon{display:inline-block;color:var(--accent);transition:transform .2s ease}
+.ptr.armed{border-color:var(--accent);background:var(--sel);color:var(--accent)}
+.ptr.armed .ptr-icon{transform:rotate(180deg)}
+.ptr.settle{transition:transform .28s ease,opacity .28s ease}
+/* Events this weekend */
+.outing.outing-events{grid-column:1/-1;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px}
+.outing.outing-events .ev-ico{display:block;font-size:1.35rem;line-height:1;color:inherit}
+.outing.outing-events .ev-txt{display:grid;gap:2px;min-width:0;font-size:inherit;color:var(--fg)}
+.outing.outing-events .ev-txt span{display:block;font-size:.78rem;color:var(--muted);line-height:1.3}
+body.events-mode .wrap > :is(.mood,.search,.cuisines,.filters,.tabs,#view-build,#view-surprise,#view-spots,#plan){display:none !important}
+#view-events{display:grid;gap:14px}
+.ev-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.ev-when{font-size:.85rem;font-weight:700;color:var(--accent);letter-spacing:.04em}
+.ev-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ev-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.ev-card h3{font-family:var(--serif);font-weight:700;font-size:1.25rem}
+.ev-card p{margin:0;color:var(--muted);font-size:.9rem}
+.ev-card .ev-links{display:flex;flex-wrap:wrap;gap:8px}
+.ev-card .ev-links a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;flex:1 1 auto;text-align:center}
+.ev-live{display:grid;gap:8px}
+.ev-live:empty{display:none}
+.ev-item{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;border-top:1px solid var(--line);padding-top:8px}
+.ev-item b{font-weight:700;line-height:1.3}
+.ev-item .meta{grid-column:1;font-size:.82rem;color:var(--muted)}
+.ev-item .ev-item-links{grid-column:1/-1;display:flex;gap:12px;align-items:center}
+.ev-item a{font-size:.85rem;color:var(--steel);font-weight:600}
+.ev-add-card .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.add-event{width:100%;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);border-radius:14px;padding:12px;font-weight:700}
+.add-event:hover{background:var(--sel)}
+@media (max-width:520px){.ev-grid,.ev-add-card .form-grid{grid-template-columns:1fr}}
 /* Search */
 .search{position:relative;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 12px)}
 .search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:0 6px 0 16px;min-height:50px}
@@ -238,6 +271,8 @@ body.shared #headline, body.shared #subline{display:none}
 </head>
 <body>
 
+<div class="ptr" id="ptr" aria-hidden="true"><span class="ptr-icon">↓</span><span class="ptr-text">Pull down to reset</span></div>
+
 <div class="wrap">
   <header>
     <div class="logo"><svg viewBox="15 12 37 42" aria-hidden="true" focusable="false"><path d="M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z" fill="currentColor"/></svg><span>Magic City Nights</span></div>
@@ -254,6 +289,23 @@ body.shared #headline, body.shared #subline{display:none}
     <button class="outing" data-outing="coffee" aria-pressed="false"><b>Coffee date</b><span>Coffee, activity, a bite, a treat</span></button>
     <button class="outing" data-outing="brunch" aria-pressed="false"><b>Brunch date</b><span>Brunch, activity, coffee or a treat</span></button>
     <button class="outing" data-outing="sun" aria-pressed="false"><b>Sun up to sundown</b><span>The whole day, brunch to last call</span></button>
+    <button class="outing outing-events" id="events-open" data-events="" aria-pressed="false"><span class="ev-ico" aria-hidden="true">🎟️</span><span class="ev-txt"><b>Events this weekend</b><span>Concerts, shows and Candlelight in Birmingham</span></span></button>
+  </section>
+
+  <section id="view-events" hidden aria-label="Events this weekend">
+    <div class="ev-bar"><span class="ev-when" id="ev-when"></span><button type="button" class="btn ghost small" id="ev-back">← Back to planning</button></div>
+    <p class="hint" id="ev-intro"></p>
+    <div class="ev-grid" id="ev-grid"></div>
+    <div class="card ev-add-card">
+      <h2>Got tickets? Add it to your night</h2>
+      <p class="hint" id="ev-add-hint"></p>
+      <form id="ev-form" class="form-grid">
+        <div class="field full"><label for="ev-name">Event</label><input id="ev-name" required placeholder="Candlelight: Queen vs. ABBA"></div>
+        <div class="field"><label for="ev-time">Starts at (optional)</label><input id="ev-time" type="time"></div>
+        <div class="field"><label for="ev-link">Ticket link (optional)</label><input id="ev-link" type="url" placeholder="https://…"></div>
+        <div class="full row"><button class="btn primary" type="submit" id="ev-submit">Add to my plan</button></div>
+      </form>
+    </div>
   </section>
 
   <section class="mood" role="group" aria-label="Mood">
@@ -445,6 +497,8 @@ let tab = "build";
 let mood = "";
 let grown = false;
 let cuisines = [];   // food types picked; empty means all food
+let planEvents = {};   // outing -> {n: name, w: when, u: ticket link}
+let eventsOn = false, eventsFromPlan = false;
 let editing = null;
 let db = null, dbReady = false, fresh = new Set();
 // Website mode: with no Claude database, spots and saved nights live in this browser.
@@ -479,8 +533,9 @@ try {
   if (s.mood === "social" || s.mood === "lowkey") mood = s.mood;
   grown = !!s.grown;
   if (Array.isArray(s.cuisines)) cuisines = s.cuisines.filter(k => CUISINES[k]);
+  if (s.planEvents && typeof s.planEvents === "object") planEvents = s.planEvents;
 } catch(e) {}
-function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines})); } catch(e) {} }
+function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines, planEvents})); } catch(e) {} }
 
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
 function passes(s){
@@ -508,11 +563,12 @@ function status(msg){ const el = $("#status"); el.hidden = !msg; el.textContent 
 
 /* ---------- render ---------- */
 function renderHeader(){
-  $("#headline").innerHTML = O().headline;
-  $("#subline").textContent = O().sub;
+  $("#headline").innerHTML = eventsOn ? "<em>Birmingham</em> events this weekend" : O().headline;
+  $("#subline").textContent = eventsOn ? "Concerts, shows and things to do, live on each ticket site. Pick one, then plan the rest of the night around it." : O().sub;
+  $("#events-open").setAttribute("aria-pressed", eventsOn);
   $("#roll-title").textContent = O().roll;
   $("#roll-text").textContent = O().rollText;
-  document.querySelectorAll(".outing").forEach(b => b.setAttribute("aria-pressed", b.dataset.outing === outing));
+  document.querySelectorAll(".outing[data-outing]").forEach(b => b.setAttribute("aria-pressed", !eventsOn && b.dataset.outing === outing));
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
 }
@@ -555,6 +611,8 @@ function chosenStops(){ return O().slots.map(slot => ({slot, spot: spotById(P()[
 
 function planText(){
   const lines = chosenStops().filter(x => x.spot).map(({slot, spot}) => `${slot.label}: ${spot.name}${spot.area?` (${spot.area})`:""}`);
+  const ev = planEvents[outing];
+  if (ev) lines.push(`Event: ${ev.n}${ev.w ? ` (${ev.w})` : ""}${safeUrl(ev.u) ? ` ${ev.u}` : ""}`);
   return lines.length ? O().text + "\n" + lines.join("\n") : "";
 }
 
@@ -577,12 +635,18 @@ function renderPlan(){
       <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span></div>${side}</li>`;
   }).join("");
   fresh.clear();
-  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : "Nothing picked yet"}</span></div>
-    <ol class="stops">${rows}</ol>
-    <div class="row"><button class="btn primary small" id="invite-open" ${chosen.length?"":"disabled"}>Send the invite</button>
-    <button class="btn primary small" id="copy-plan" ${chosen.length?"":"disabled"}>Copy plan to text</button>
+  const ev = planEvents[outing];
+  const evRow = ev ? `<li class="stop" style="--c:var(--accent)"><span class="badge">Event</span>
+      <div class="stop-main">${safeUrl(ev.u) ? `<a class="name" href="${esc(ev.u)}" target="_blank" rel="noopener">${esc(ev.n)}</a>` : `<b>${esc(ev.n)}</b>`}${ev.w ? `<span class="meta">${esc(ev.w)}</span>` : ""}
+      ${safeUrl(ev.u) ? `<span class="links"><a class="reserve" href="${esc(ev.u)}" target="_blank" rel="noopener">Tickets ↗</a></span>` : ""}</div><button class="x" id="event-clear" aria-label="Remove the event">Remove</button></li>` : "";
+  const any = chosen.length || ev;
+  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : ev ? "1 event" : "Nothing picked yet"}</span></div>
+    <ol class="stops">${rows}${evRow}</ol>
+    <button type="button" class="add-event" id="add-event">🎟️ ${ev ? "Change the event" : "Add an event to this night"}</button>
+    <div class="row"><button class="btn primary small" id="invite-open" ${any?"":"disabled"}>Send the invite</button>
+    <button class="btn primary small" id="copy-plan" ${any?"":"disabled"}>Copy plan to text</button>
     <button class="btn small" id="save-plan" ${chosen.length && (db || local) ?"":"disabled"}>Save this night</button>
-    <button class="btn ghost small" id="clear-plan" ${chosen.length?"":"disabled"}>Start over</button></div>`;
+    <button class="btn ghost small" id="clear-plan" ${any?"":"disabled"}>Start over</button></div>`;
 }
 
 function renderSpots(){
@@ -612,7 +676,7 @@ function renderSaved(){
 
 /* Re-rendering replaces buttons and rows, so remember where the viewer was and put it back:
    page scroll, each row's sideways scroll, and which control had focus. */
-const FOCUS_KEYS = ["slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
+const FOCUS_KEYS = ["evpick","slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
 function focusKey(el){
   if (!el || el === document.body || !document.contains(el)) return null;
   if (el.id) return "#" + CSS.escape(el.id);
@@ -637,7 +701,10 @@ function render(){
       $("#tab-"+t).setAttribute("aria-selected", tab === t);
       $("#view-"+t).hidden = tab !== t;
     }
+    document.body.classList.toggle("events-mode", eventsOn);
+    $("#view-events").hidden = !eventsOn;
     renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+    if (eventsOn) renderEvents();
   });
   remember();
 }
@@ -771,6 +838,176 @@ window.addEventListener("resize", fitResults);
 if (window.visualViewport) { visualViewport.addEventListener("resize", fitResults); visualViewport.addEventListener("scroll", fitResults); }
 $("#spot-detail").addEventListener("click", e => { if (e.target === e.currentTarget) closeSpotDetail(); });
 
+/* ---------- events this weekend ----------
+   Paste partner links and API keys here. Blank values fall back to each site's public Birmingham, AL page.
+   - feverAffiliateUrl / feverCandlelightAffiliateUrl: full Fever tracking links (they replace the plain page links).
+   - seatgeekAid: SeatGeek partner "aid" number, added to every SeatGeek link. seatgeekAffiliateUrl replaces the page link.
+   - ticketmasterApiKey / seatgeekClientId: when set, that card also lists this weekend's events live from the site's API.
+     Both keys are public client keys meant for browser use; never put a secret key here. */
+const EVENTS_CONFIG = {
+  feverAffiliateUrl: "",
+  feverCandlelightAffiliateUrl: "",
+  seatgeekAid: "",
+  seatgeekAffiliateUrl: "",
+  ticketmasterApiKey: "",
+  seatgeekClientId: "",
+};
+const withAid = url => {
+  if (!EVENTS_CONFIG.seatgeekAid) return url;
+  try { const u = new URL(url); u.searchParams.set("aid", EVENTS_CONFIG.seatgeekAid); return u.toString(); } catch(e) { return url; }
+};
+const EVENT_SOURCES = [
+  {id:"fever", name:"Fever", blurb:"Candlelight concerts, immersive shows and one-of-a-kind experiences.",
+    links:[{label:"See Birmingham events", url:"https://feverup.com/en/birmingham-al", aff:() => EVENTS_CONFIG.feverAffiliateUrl},
+           {label:"Candlelight concerts", url:"https://feverup.com/en/birmingham-al/candlelight", aff:() => EVENTS_CONFIG.feverCandlelightAffiliateUrl}]},
+  {id:"eventbrite", name:"Eventbrite", blurb:"Local parties, classes, festivals, food events and pop-ups happening this weekend.",
+    links:[{label:"See this weekend", url:"https://www.eventbrite.com/d/al--birmingham/events--this-weekend/"}]},
+  {id:"ticketmaster", name:"Ticketmaster", blurb:"Concerts, comedy, sports and big shows at the BJCC, Alabama Theatre and more.",
+    links:[{label:"See Birmingham events", url:"https://www.ticketmaster.com/discover/birmingham"}],
+    live:() => EVENTS_CONFIG.ticketmasterApiKey ? loadTicketmaster(EVENTS_CONFIG.ticketmasterApiKey) : null},
+  {id:"seatgeek", name:"SeatGeek", blurb:"Concerts, games and theater tickets around Birmingham this weekend.",
+    links:[{label:"See this weekend", url:"https://seatgeek.com/cities/birmingham/this-weekend", aff:() => EVENTS_CONFIG.seatgeekAffiliateUrl, wrap:withAid}],
+    live:() => EVENTS_CONFIG.seatgeekClientId ? loadSeatGeek(EVENTS_CONFIG.seatgeekClientId) : null},
+];
+// This weekend: Friday through Sunday. From Friday on, it starts now; earlier in the week it's the coming Friday.
+function weekendRange(now = new Date()){
+  const day = now.getDay();               // 0 Sun ... 6 Sat
+  const start = new Date(now); const end = new Date(now);
+  if (day === 0 || day >= 5) { end.setDate(now.getDate() + (day === 0 ? 0 : 7 - day)); }
+  else { start.setDate(now.getDate() + (5 - day)); start.setHours(0, 0, 0, 0); end.setTime(start.getTime()); end.setDate(start.getDate() + 2); }
+  end.setHours(23, 59, 59, 0);
+  return {start, end};
+}
+const pad = n => String(n).padStart(2, "0");
+const localStamp = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+const utcStamp = d => d.toISOString().replace(/\.\d{3}Z$/, "Z");
+const eventWhen = v => { const d = new Date(v); return isNaN(d) ? "" : d.toLocaleString(undefined, {weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}); };
+// Live event adapters. Each returns a list of {name, when, venue, url}.
+async function loadTicketmaster(key){
+  const {start, end} = weekendRange();
+  const q = new URLSearchParams({apikey:key, city:"Birmingham", stateCode:"AL", countryCode:"US", startDateTime:utcStamp(start), endDateTime:utcStamp(end), sort:"date,asc", size:"10"});
+  const r = await fetch("https://app.ticketmaster.com/discovery/v2/events.json?" + q);
+  if (!r.ok) throw new Error("ticketmaster " + r.status);
+  const j = await r.json();
+  return ((j._embedded && j._embedded.events) || []).map(e => ({
+    name:e.name, url:e.url, venue:e._embedded && e._embedded.venues && e._embedded.venues[0] ? e._embedded.venues[0].name : "",
+    when:eventWhen(e.dates && e.dates.start ? (e.dates.start.dateTime || `${e.dates.start.localDate}T${e.dates.start.localTime || "00:00:00"}`) : "")}));
+}
+async function loadSeatGeek(id){
+  const {start, end} = weekendRange();
+  const q = new URLSearchParams({client_id:id, "venue.city":"Birmingham", "venue.state":"AL", "datetime_local.gte":localStamp(start), "datetime_local.lte":localStamp(end), sort:"datetime_local.asc", per_page:"10"});
+  const r = await fetch("https://api.seatgeek.com/2/events?" + q);
+  if (!r.ok) throw new Error("seatgeek " + r.status);
+  const j = await r.json();
+  return (j.events || []).map(e => ({name:e.title, url:withAid(e.url), venue:e.venue ? e.venue.name : "", when:eventWhen(e.datetime_local)}));
+}
+const liveCache = {}, livePicks = new Map();
+function renderEvents(){
+  const {start, end} = weekendRange();
+  const fmt = d => d.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric"});
+  $("#ev-when").textContent = start.toDateString() === end.toDateString() ? `This weekend · Today, ${fmt(end)}` : `This weekend · ${fmt(start)} – ${fmt(end)}`;
+  $("#ev-intro").textContent = eventsFromPlan
+    ? `Find something to go with your ${O().name.toLowerCase()}. Each button opens that site's live Birmingham page in a new tab. Once you have tickets, add the event below.`
+    : "Each button opens that site's live Birmingham, AL page in a new tab.";
+  $("#ev-add-hint").textContent = `It goes in your ${O().name.toLowerCase()} plan, and in the invite.`;
+  $("#ev-submit").textContent = `Add to my ${O().name.toLowerCase()} plan`;
+  const grid = $("#ev-grid");
+  if (!grid.children.length) {
+    grid.innerHTML = EVENT_SOURCES.map(src => `<article class="ev-card" data-source="${src.id}">
+      <h3>${esc(src.name)}</h3><p>${esc(src.blurb)}</p>
+      <div class="ev-live" id="ev-live-${src.id}"></div>
+      <div class="ev-links">${src.links.map((l, i) => {
+        const aff = l.aff && l.aff();
+        const href = aff || (l.wrap ? l.wrap(l.url) : l.url);
+        return `<a class="btn ${i ? "" : "primary"}" href="${esc(href)}" target="_blank" rel="noopener${aff || (l.wrap && EVENTS_CONFIG.seatgeekAid) ? " sponsored" : ""}">${esc(l.label)} ↗</a>`;
+      }).join("")}</div></article>`).join("");
+  }
+  for (const src of EVENT_SOURCES) {
+    if (!src.live) continue;
+    const box = $(`#ev-live-${src.id}`);
+    if (!liveCache[src.id]) { const job = src.live(); if (!job) continue; liveCache[src.id] = job.then(list => ({list}), () => ({error:true})); box.innerHTML = `<p class="hint">Loading this weekend's events…</p>`; }
+    liveCache[src.id].then(res => {
+      if (res.error) { box.innerHTML = `<p class="hint">Live events couldn't load right now. Use the button below.</p>`; return; }
+      if (!res.list.length) { box.innerHTML = `<p class="hint">No events listed for this weekend yet.</p>`; return; }
+      box.innerHTML = res.list.map((e, i) => {
+        const key = `${src.id}-${i}`; livePicks.set(key, e);
+        return `<div class="ev-item"><b>${esc(e.name)}</b><span class="meta">${[e.when, e.venue].filter(Boolean).map(esc).join(" · ")}</span>
+          <div class="ev-item-links">${safeUrl(e.url) ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">Tickets ↗</a>` : ""}<button type="button" class="btn small" data-evpick="${key}">Add to my night</button></div></div>`;
+      }).join("");
+    });
+  }
+}
+function openEvents(fromPlan){
+  eventsOn = true; eventsFromPlan = fromPlan;
+  render();
+  $("#view-events").scrollIntoView({block:"start", behavior:"smooth"});
+}
+function closeEvents(){ eventsOn = false; const back = eventsFromPlan; eventsFromPlan = false; render(); if (back) $("#plan").scrollIntoView({block:"start", behavior:"smooth"}); }
+function addEventToPlan(ev){
+  planEvents[outing] = ev;
+  eventsOn = false; eventsFromPlan = false;
+  render();
+  $("#plan").scrollIntoView({block:"start", behavior:"smooth"});
+  toast(`Event added to your ${O().name.toLowerCase()} plan`);
+}
+function pickLiveEvent(key){ const e = livePicks.get(key); if (e) addEventToPlan({n:e.name, w:[e.when, e.venue].filter(Boolean).join(" · "), u:safeUrl(e.url)}); }
+$("#ev-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const n = $("#ev-name").value.trim(); if (!n) return;
+  const link = $("#ev-link").value.trim();
+  if (link && !safeUrl(link)) { toast("Ticket links need to start with https://"); return; }
+  addEventToPlan({n, w:timeWord($("#ev-time").value), u:safeUrl(link)});
+  for (const id of ["#ev-name", "#ev-time", "#ev-link"]) $(id).value = "";
+});
+
+/* ---------- pull down to reset ---------- */
+function resetEverything(){
+  mood = ""; grown = false; cuisines = [];
+  $("#f-budget").value = "4"; $("#f-area").value = ""; $("#f-setting").value = ""; $("#f-dress").value = "";
+  $("#q").value = ""; renderResults();
+  picks[outing] = {}; locks[outing] = {}; planEvents[outing] = null;
+  render();
+  window.scrollTo({top:0, behavior:"smooth"});
+  toast("Everything's cleared. Start fresh.");
+}
+(() => {
+  const ptr = $("#ptr"), label = ptr.querySelector(".ptr-text");
+  const DEAD = 12, TRIGGER = 70, MAX = 110;   // px: ignore tiny nudges, distance to arm, how far the pill travels
+  let startX = 0, startY = 0, tracking = false, armed = false, dist = 0, frame = 0;
+  const skip = el => el.closest("input, textarea, select, dialog, .rail, .chips, .search-results, #view-events .ev-grid");
+  const paint = () => {
+    frame = 0;
+    ptr.style.transform = `translate(-50%, ${Math.min(dist, MAX) - 90}px)`;
+    ptr.style.opacity = String(Math.min(1, dist / 36));
+    ptr.classList.toggle("armed", armed);
+    label.textContent = armed ? "Release to reset" : "Pull down to reset";
+  };
+  const schedule = () => { if (!frame) frame = requestAnimationFrame(paint); };
+  const settle = () => {
+    tracking = false; armed = false; dist = 0;
+    ptr.classList.add("settle"); schedule();
+    setTimeout(() => ptr.classList.remove("settle"), 300);
+  };
+  addEventListener("touchstart", e => {
+    tracking = e.touches.length === 1 && window.scrollY <= 0 && !document.querySelector("dialog[open]")
+      && !document.body.classList.contains("shared") && !skip(e.target);
+    if (!tracking) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; dist = 0; armed = false;
+    ptr.classList.remove("settle");
+  }, {passive:true});
+  addEventListener("touchmove", e => {
+    if (!tracking) return;
+    const dy = e.touches[0].clientY - startY, dx = Math.abs(e.touches[0].clientX - startX);
+    // Stop listening if the page scrolled, the finger went up, or the swipe is mostly sideways.
+    if (window.scrollY > 0 || dy < -DEAD || (dx > DEAD && dx > dy)) { settle(); return; }
+    dist = Math.max(0, (dy - DEAD) * 0.55);
+    armed = dist >= TRIGGER;
+    schedule();
+  }, {passive:true});
+  addEventListener("touchend", () => { if (!tracking) return; const go = armed; settle(); if (go) resetEverything(); }, {passive:true});
+  addEventListener("touchcancel", () => { if (tracking) settle(); }, {passive:true});
+})();
+
 /* ---------- invite ---------- */
 const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
 const EMOJI = {food:"🍽️", activity:"🎟️", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
@@ -834,6 +1071,8 @@ function inviteText(){
     parts.push(`Here's our ${when} ✨`);
     if (groups.length > 1) groups.forEach(g => parts.push(`${SECTION_ICON[g.sec]} ${g.sec.toUpperCase()}\n${g.lines.join("\n\n")}`));
     else if (groups.length) parts.push(groups[0].lines.join("\n\n"));
+    const ev = planEvents[outing];
+    if (ev) parts.push(`🎟️ Event — ${ev.n}${ev.w ? ` · ${ev.w}` : ""}`);
     parts.push(details, `See our full plan 👇\n${planLink(timeVal, $("#inv-dress").value)}`);
   } else {
     parts.push(`I've got our ${when} planned 😉\nThe rest is a surprise.`, details, `Planned with Magic City Nights 🌙\n${SITE_URL}`);
@@ -848,6 +1087,7 @@ function planLink(timeVal, dress){
   const st = chosenStops().filter(x => x.spot).map(({slot, spot}) => [slot.id, /^s-/.test(spot.id) ? spot.id :
     {n:spot.name, c:spot.category, a:spot.area || "", d:spot.address || "", w:safeUrl(spot.website), r:safeUrl(spot.reserve)}]);
   const data = {o:outing, s:st}; if (timeVal) data.t = timeVal; if (dress) data.d = dress;
+  const ev = planEvents[outing]; if (ev) data.e = {n:ev.n, w:ev.w || "", u:safeUrl(ev.u)};
   return SITE_URL + "?plan=" + b64url(JSON.stringify(data));
 }
 function renderInvite(){
@@ -939,7 +1179,12 @@ async function removeSpot(id){
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
   const t = e.target.closest("button"); if (!t) return;
-  if (t.dataset.outing) { outing = t.dataset.outing; render(); return; }
+  if (t.dataset.outing) { outing = t.dataset.outing; eventsOn = false; render(); return; }
+  if (t.id === "events-open") { openEvents(false); return; }
+  if (t.id === "add-event") { openEvents(true); return; }
+  if (t.id === "ev-back") { closeEvents(); return; }
+  if (t.dataset.evpick) { pickLiveEvent(t.dataset.evpick); return; }
+  if (t.id === "event-clear") { planEvents[outing] = null; render(); return; }
   if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
   if (t.id === "grown-toggle") { grown = !grown; render(); return; }
   if (t.dataset.cuisine !== undefined) {
@@ -962,7 +1207,7 @@ document.addEventListener("click", async e => {
   if (t.id === "invite-send") { sendInvite(); return; }
   if (t.id === "invite-cancel") { closeInvite(); return; }
   if (t.id === "copy-plan") { copyPlan(); return; }
-  if (t.id === "clear-plan") { picks[outing] = {}; locks[outing] = {}; render(); return; }
+  if (t.id === "clear-plan") { picks[outing] = {}; locks[outing] = {}; planEvents[outing] = null; render(); return; }
   if (t.id === "save-plan" && (db || local)) {
     const stops = chosenStops().filter(x => x.spot).map(({slot, spot}) => ({slot:slot.id, id:spot.id, name:spot.name}));
     if (!db) { nights.push({id:newId(), outing, stops, savedAt:new Date().toISOString()}); saveLocal(); renderSaved(); toast("Saved"); return; }
@@ -1093,9 +1338,10 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
       : v && v.n ? {name:v.n, category:v.c, area:v.a, address:v.d, website:v.w, reserve:v.r} : null;
     return spot ? {slot, spot} : null;
   }).filter(Boolean);
-  if (!stops.length) { box.innerHTML = `<p class="hint">This plan couldn't be opened. Ask for the invite again.</p>`; return; }
+  const sharedEv = data.e && data.e.n ? data.e : null;
+  if (!stops.length && !sharedEv) { box.innerHTML = `<p class="hint">This plan couldn't be opened. Ask for the invite again.</p>`; return; }
   const hour = /^(\d{1,2})/.test(data.t || "") ? Number(data.t.slice(0, 2)) : null;
-  const when = (hour !== null ? hour < 12 : times[stops[0].slot.id] === "Morning") ? "day" : "night";
+  const when = (hour !== null ? hour < 12 : stops.length && times[stops[0].slot.id] === "Morning") ? "day" : "night";
   const chips = [data.t && `⏰ Be ready by ${timeWord(data.t)}`, dressWord(data.d) && `👗 ${dressWord(data.d)[0].toUpperCase() + dressWord(data.d).slice(1)}`].filter(Boolean);
   const groups = [];
   for (const x of stops) {
@@ -1118,6 +1364,7 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
   box.innerHTML = `<div class="sh-top"><h1>Here's our <em>${when}</em> ✨</h1>
       ${chips.length ? `<div class="sh-chips">${chips.map(c => `<span class="sh-chip">${esc(c)}</span>`).join("")}</div>` : ""}</div>
     ${groups.map(g => `<section class="sh-sec">${groups.length > 1 ? `<h2>${SECTION_ICON[g.sec]} ${g.sec}</h2>` : ""}${g.items.map(card).join("")}</section>`).join("")}
+    ${sharedEv ? `<section class="sh-sec"><article class="sh-stop" style="--c:var(--accent)"><span class="sh-kind">🎟️ Event</span><span class="sh-name">${esc(sharedEv.n)}</span>${sharedEv.w ? `<span class="sh-where">${esc(sharedEv.w)}</span>` : ""}${safeUrl(sharedEv.u) ? `<span class="sh-links"><a class="go" href="${esc(sharedEv.u)}" target="_blank" rel="noopener">Tickets</a></span>` : ""}</article></section>` : ""}
     <div class="sh-foot"><span>Planned with Magic City Nights 🌙</span><a href="${esc(SITE_URL)}">Plan your own night →</a></div>`;
   document.title = `Our ${when} · Magic City Nights`;
 })();
