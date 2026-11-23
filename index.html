@@ -1689,13 +1689,35 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
 </script>
 <script>
 /* Booking links: any Resy or OpenTable link opens on a date a week from today (viewer's local time) for a party of 2.
-   The date is filled in when the link is tapped, so it never goes stale. Covers spot cards, plans and user-added links. */
+   The date is filled in when the link is tapped, so it never goes stale. Covers spot cards, plans and user-added links.
+   If the link is a spot's reserve link and that spot lists "closed" weekdays in spots.json (0 = Sunday), the date
+   moves forward to the next day the spot is open. */
 (function () {
   var pad = function (n) { return String(n).padStart(2, "0"); };
+  var closedByLink = {};
+  function linkKey(href) {
+    try { var u = new URL(href); return u.hostname.replace(/^www\./, "").toLowerCase() + u.pathname.replace(/\/+$/, "").toLowerCase(); } catch (err) { return ""; }
+  }
+  function learn(list) {
+    if (!Array.isArray(list)) return;
+    list.forEach(function (s) {
+      if (!s || !s.reserve || !Array.isArray(s.closed)) return;
+      var days = s.closed.filter(function (n) { return n === 0 || (n > 0 && n < 7 && n % 1 === 0); });
+      var k = linkKey(s.reserve); if (k && days.length) closedByLink[k] = days;
+    });
+  }
+  try { fetch("spots.json").then(function (r) { return r.ok ? r.json() : null; }).then(learn).catch(function () {}); } catch (err) {}
+  function closedDays(href) {
+    var k = linkKey(href);
+    if (!closedByLink[k]) { try { if (typeof spots !== "undefined") learn(spots); } catch (err) {} }
+    return closedByLink[k] || null;
+  }
   function dateReady(a) {
     var u; try { u = new URL(a.href); } catch (err) { return; }
     var h = u.hostname.replace(/^www\./, "");
     var d = new Date(); d.setDate(d.getDate() + 7);
+    var shut = closedDays(a.href);
+    for (var i = 0; shut && i < 7 && shut.indexOf(d.getDay()) !== -1; i++) d.setDate(d.getDate() + 1);
     var ymd = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
     if ((h === "resy.com" || h.slice(-9) === ".resy.com") && u.pathname.indexOf("/venues/") !== -1) {
       u.searchParams.set("date", ymd);
