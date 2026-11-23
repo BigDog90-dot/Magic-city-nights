@@ -11,9 +11,26 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Magic City Nights">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B1426'/%3E%3Cpath d='M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z' fill='%23D4AF37'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Magic City Nights">
+<meta property="og:title" content="Magic City Nights">
+<meta property="og:description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta property="og:url" content="https://magiccitynights.com/">
+<meta property="og:image" content="https://magiccitynights.com/images/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Magic City Nights, Birmingham, AL. A gold crescent moon with the Vulcan statue and the city skyline.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Magic City Nights">
+<meta name="twitter:description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta name="twitter:image" content="https://magiccitynights.com/images/og-image.jpg">
+<meta name="twitter:image:alt" content="Magic City Nights, Birmingham, AL">
+<link rel="preload" as="image" href="images/logo-simple.webp" type="image/webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Playfair+Display:wght@600;700&display=swap">
@@ -55,8 +72,12 @@ h1 em{font-style:normal;color:var(--accent)}
 h2{font-size:1.25rem;font-weight:800}
 h3{font-size:1rem;font-weight:600}
 .sub{color:var(--muted);margin:6px 0 0}
-.logo{display:flex;align-items:center;gap:.45em;width:fit-content;max-width:100%;font-family:var(--serif);font-weight:700;font-size:1.3rem;line-height:1.1;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--accent);margin-bottom:16px;text-shadow:none;filter:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-synthesis:none}
-.logo svg{flex:none;width:.95em;height:1.08em;margin-top:-.08em;filter:none}
+.logo{display:block;width:auto;height:clamp(118px,17vh,160px);max-width:100%;margin:0 0 12px}
+.brand-logo{display:block;width:auto;max-width:100%;margin:0 auto}
+.plan-logo{height:clamp(120px,32vw,170px)}
+.invite-logo{height:96px;margin-bottom:4px}
+.sh-logo{height:clamp(170px,48vw,230px)}
+body.shared header .logo{display:none}
 .eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -333,7 +354,7 @@ body.shared #headline, body.shared #subline{display:none}
 
 <div class="wrap">
   <header>
-    <div class="logo"><svg viewBox="15 12 37 42" aria-hidden="true" focusable="false"><path d="M38 12a21 21 0 1 0 14 34A17 17 0 0 1 38 12z" fill="currentColor"/></svg><span>Magic City Nights</span></div>
+    <img class="logo" src="images/logo-simple.webp" width="340" height="399" alt="Magic City Nights, Birmingham, AL" fetchpriority="high" decoding="async">
     <h1 id="headline">Build a <em>Birmingham</em> date</h1>
     <p class="sub" id="subline">Pick your spots, or let it surprise you.</p>
   </header>
@@ -485,6 +506,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
 
 <dialog class="invite" id="invite" aria-labelledby="invite-title">
   <form method="dialog" id="invite-form">
+    <img class="brand-logo invite-logo" src="images/logo-main.webp" width="440" height="541" alt="" loading="lazy" decoding="async">
     <h2 id="invite-title">Send the invite</h2>
     <div class="field"><label for="inv-note">Personal note (optional)</label>
       <textarea id="inv-note" rows="2" placeholder="Wear something nice. Can't wait to see you."></textarea></div>
@@ -716,7 +738,7 @@ function renderPlan(){
       <div class="stop-main">${safeUrl(ev.u) ? `<a class="name" href="${esc(ev.u)}" target="_blank" rel="noopener">${esc(ev.n)}</a>` : `<b>${esc(ev.n)}</b>`}${ev.w ? `<span class="meta">${esc(ev.w)}</span>` : ""}
       ${safeUrl(ev.u) ? `<span class="links"><a class="reserve" href="${esc(ev.u)}" target="_blank" rel="noopener">Tickets ↗</a></span>` : ""}</div><button class="x" id="event-clear" aria-label="Remove the event">Remove</button></li>` : "";
   const any = chosen.length || ev;
-  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""}${top ? ` · up to ${money(top)}` : ""}` : ev ? "1 event" : "Nothing picked yet"}</span></div>
+  el.innerHTML = `${any ? `<img class="brand-logo plan-logo" src="images/logo-main.webp" width="440" height="541" alt="Magic City Nights" loading="lazy" decoding="async">` : ""}<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""}${top ? ` · up to ${money(top)}` : ""}` : ev ? "1 event" : "Nothing picked yet"}</span></div>
     <ol class="stops">${rows}${evRow}</ol>
     <button type="button" class="add-event" id="add-event">🎟️ ${ev ? "Change the event" : "Add an event to this night"}</button>
     <div class="row"><button class="btn primary small" id="invite-open" ${any?"":"disabled"}>Send the invite</button>
@@ -1575,7 +1597,7 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
       ${safeUrl(s.website) ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">Website</a>` : ""}</span>
     </article>`;
   };
-  box.innerHTML = `<div class="sh-top"><h1>Here's our <em>${when}</em> ✨</h1>
+  box.innerHTML = `<div class="sh-top"><img class="brand-logo sh-logo" src="images/logo-main.webp" width="440" height="541" alt="Magic City Nights, Birmingham, AL" decoding="async"><h1>Here's our <em>${when}</em> ✨</h1>
       ${chips.length ? `<div class="sh-chips">${chips.map(c => `<span class="sh-chip">${esc(c)}</span>`).join("")}</div>` : ""}</div>
     ${groups.map(g => `<section class="sh-sec">${groups.length > 1 ? `<h2>${SECTION_ICON[g.sec]} ${g.sec}</h2>` : ""}${g.items.map(card).join("")}</section>`).join("")}
     ${sharedEv ? `<section class="sh-sec"><article class="sh-stop" style="--c:var(--accent)"><span class="sh-kind">🎟️ Event</span><span class="sh-name">${esc(sharedEv.n)}</span>${sharedEv.w ? `<span class="sh-where">${esc(sharedEv.w)}</span>` : ""}${safeUrl(sharedEv.u) ? `<span class="sh-links"><a class="go" href="${esc(sharedEv.u)}" target="_blank" rel="noopener">Tickets</a></span>` : ""}</article></section>` : ""}
