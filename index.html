@@ -35,7 +35,7 @@
 <link rel="preload" as="image" href="images/logo-simple.webp" type="image/webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Playfair+Display:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700;6..96,800&family=Source+Sans+3:wght@400;500;700;800&family=Playfair+Display:wght@600;700&display=swap">
 <style>
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -50,9 +50,9 @@ img{max-width:100%}
   --accent:#D4AF37; --accent-fg:#0B1426; --sel:#2A2410; --steel:#4FA3A5; --steel-soft:#12303A;
   --food:#D4AF37; --activity:#4FA3A5; --dessert:#E8A15A; --lounge:#B993F0; --bar:#5FD3A6; --coffee:#D6A777; --brunch:#E9C46A;
   color-scheme:dark;
-  --display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
-  --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --serif:"Playfair Display", Georgia, "Times New Roman", serif;
+  --display:"Bodoni Moda", Georgia, "Times New Roman", serif;
+  --body:"Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif:"Bodoni Moda", Georgia, "Times New Roman", serif;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -71,10 +71,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.1}
 h1{font-family:var(--serif);font-size:clamp(1.9rem,6vw,2.6rem);font-weight:700;letter-spacing:-.01em}
 h1 em{font-style:normal;color:var(--accent)}
+header{text-align:center}
+header h1{font-family:"Playfair Display", Georgia, serif;font-size:clamp(2.1rem,7vw,3.2rem);letter-spacing:.05em;text-align:center}
 h2{font-size:1.25rem;font-weight:800}
 h3{font-size:1rem;font-weight:600}
 .sub{color:var(--muted);margin:6px 0 0}
-.logo{display:block;width:auto;height:clamp(118px,17vh,160px);max-width:100%;margin:0 0 12px}
+.logo{display:block;width:auto;height:clamp(118px,17vh,160px);max-width:100%;margin:0 auto 12px}
 .brand-logo{display:block;width:auto;max-width:100%;margin:0 auto}
 .plan-logo{height:clamp(120px,32vw,170px)}
 .invite-logo{height:96px;margin-bottom:4px}
