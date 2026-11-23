@@ -355,6 +355,60 @@ body.shared #headline, body.shared #subline{display:none}
 .sh-links a.go{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .sh-foot{display:grid;gap:12px;justify-items:center;text-align:center;padding-top:10px;color:var(--muted)}
 .sh-foot a{color:var(--accent);font-weight:700}
+
+/* Tonight toggle (sits with the mood chips) and the tonight panel */
+.mood button.tn[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
+.mood button.tn[aria-pressed="true"] .onoff{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+@media (max-width:520px){.mood button.tn{grid-column:1/-1}}
+.tonight{background:var(--surface);border:1.5px solid var(--accent);border-radius:20px;padding:16px;display:grid;gap:10px}
+.tonight .tn-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tonight .tn-head h2{font-family:var(--serif);font-weight:700;font-size:1.2rem}
+.tonight .tn-head h2 em{font-style:normal;color:var(--accent)}
+.tonight .tn-head .hint{margin-left:auto}
+.tonight .tn-events{display:grid;gap:10px}
+.tonight .tn-events h3{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.tonight .ev-up{background:var(--bg)}
+.tonight .tn-none{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tonight .tn-none .hint{flex:1 1 180px}
+
+/* List / Map switch and the map */
+.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.viewbar .seg{display:inline-grid;grid-template-columns:1fr 1fr;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);border-radius:999px;padding:3px;gap:3px}
+.viewbar .seg button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-weight:700;font-size:.88rem;color:var(--muted)}
+.viewbar .seg button[aria-pressed="true"]{background:var(--sel);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.viewbar .hint{margin-left:auto}
+body.events-mode .wrap > :is(#viewbar,#tonight,#view-map){display:none !important}
+#view-map{display:grid;gap:8px}
+#view-map[hidden]{display:none !important}
+.map-shell{position:relative;height:clamp(420px,calc(100svh - 150px),780px);border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.map{position:absolute;inset:0;background:var(--bg)}
+.map-msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:500;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;color:var(--fg);font-weight:600;text-align:center;max-width:80%}
+.map-fs{position:absolute;z-index:600;top:10px;right:10px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);color:var(--fg);border-radius:999px;padding:7px 12px;font-weight:700;font-size:.85rem}
+.map-shell.full{position:fixed;inset:0;z-index:40;height:auto;max-width:720px;margin:0 auto;border-radius:0;border:0;border-inline:1px solid var(--line)}
+.map-shell.full .map-fs{top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px))}
+.map-shell.full .leaflet-bottom{padding-bottom:env(safe-area-inset-bottom,0px)}
+.map-shell.full .leaflet-top.leaflet-left{padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px)}
+body.map-open{overflow:hidden}
+#map.leaflet-container{background:var(--bg);font-family:var(--body);font-size:14px}
+#map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) saturate(.35) brightness(.95) contrast(.92);opacity:.78}
+#map .leaflet-bar a{background:var(--surface);color:var(--fg);border-bottom-color:var(--line)}
+#map .leaflet-bar a:hover{background:var(--sel);color:var(--accent)}
+#map .leaflet-bar{border:1px solid var(--line)}
+#map .leaflet-control-attribution{background:color-mix(in srgb,var(--bg) 85%,transparent);color:var(--muted);font-size:10px}
+#map .leaflet-control-attribution a{color:var(--accent)}
+#map .leaflet-popup-content-wrapper,#map .leaflet-popup-tip{background:var(--surface);color:var(--fg);box-shadow:0 6px 24px rgba(0,0,0,.5);border:1px solid var(--line)}
+#map .leaflet-popup-content-wrapper{border-radius:14px}
+#map .leaflet-popup-content{margin:12px 14px;display:grid;gap:4px;min-width:190px}
+#map .leaflet-popup-content b{font-family:var(--display);font-size:1.02rem;font-weight:800;line-height:1.2;padding-right:14px}
+#map .leaflet-popup-content .meta{font-size:.8rem;color:var(--muted)}
+#map .leaflet-popup-content .open{font-size:.8rem;color:var(--accent);font-weight:700}
+#map .leaflet-popup-content .links{gap:10px;font-size:.88rem}
+#map .leaflet-popup-content .links a{color:var(--steel);font-weight:600}
+#map .leaflet-popup-content .links a.reserve{color:var(--accent)}
+#map .leaflet-popup-content .btn{margin-top:4px;justify-self:start}
+#map a.leaflet-popup-close-button{color:var(--muted)}
+#map .leaflet-tooltip{background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.45);font-weight:600}
+#map .leaflet-tooltip-top:before{border-top-color:var(--line)}
 </style>
 </head>
 <body>
@@ -404,6 +458,7 @@ body.shared #headline, body.shared #subline{display:none}
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
     <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown &amp; sexy <span class="onoff" aria-hidden="true">OFF</span></button>
+    <button class="tn" id="tonight-toggle" aria-pressed="false" aria-controls="tonight">🌙 Open tonight <span class="onoff" aria-hidden="true">OFF</span></button>
     <span class="grown-hint" id="grown-hint">On/off. Works with any mood.</span>
   </section>
 
@@ -438,7 +493,23 @@ body.shared #headline, body.shared #subline{display:none}
     <button class="tab" role="tab" id="tab-spots" aria-selected="false">My spots</button>
   </nav>
 
+  <div class="viewbar" id="viewbar" role="group" aria-label="Show spots as">
+    <div class="seg"><button type="button" data-view="list" aria-pressed="true">☰ List</button><button type="button" data-view="map" aria-pressed="false">🗺️ Map</button></div>
+    <span class="hint" id="viewbar-count"></span>
+  </div>
+
+  <section id="tonight" class="tonight" hidden aria-live="polite" aria-label="Tonight"></section>
+
   <section id="view-build" style="display:grid;gap:18px"></section>
+
+  <section id="view-map" hidden aria-label="Map of spots">
+    <div class="map-shell" id="map-shell">
+      <div id="map" class="map" role="application" aria-label="Map of spots that fit your filters"></div>
+      <p class="map-msg" id="map-msg" hidden></p>
+      <button type="button" class="map-fs" id="map-fs" aria-pressed="false">⤢ Full screen</button>
+    </div>
+    <p class="hint" id="map-note"></p>
+  </section>
 
   <section id="view-surprise" hidden>
     <div class="roll">
@@ -610,6 +681,7 @@ let grown = false;
 let cuisines = [];   // food types picked; empty means all food
 let planEvents = {};   // outing -> {n: name, w: when, u: ticket link}
 let eventsOn = false, eventsFromPlan = false;
+let tonight = false, viewMode = "list";   // "Open tonight" filter; Build shown as a list or a map
 let editing = null;
 let db = null, dbReady = false, fresh = new Set();
 // Website mode: with no Claude database, spots and saved nights live in this browser.
@@ -659,6 +731,7 @@ function passes(s){
   if (grown && !s.grown) return false;
   // Food type only narrows restaurants; dessert, bars and the rest aren't affected.
   if (cuisines.length && s.category === "food" && !cuisines.includes(s.cuisine)) return false;
+  if (tonight && !openTonight(s)) return false;
   return true;
 }
 const spotById = id => spots.find(s => s.id === id);
@@ -687,6 +760,8 @@ function renderHeader(){
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
   $("#grown-toggle .onoff").textContent = grown ? "ON" : "OFF";
+  $("#tonight-toggle").setAttribute("aria-pressed", tonight);
+  $("#tonight-toggle .onoff").textContent = tonight ? "ON" : "OFF";
 }
 
 function renderCuisines(){
@@ -792,7 +867,7 @@ function renderSaved(){
 
 /* Re-rendering replaces buttons and rows, so remember where the viewer was and put it back:
    page scroll, each row's sideways scroll, and which control had focus. */
-const FOCUS_KEYS = ["evpick","evfeat","evup","slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
+const FOCUS_KEYS = ["evpick","evfeat","evup","slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight","view"];
 function focusKey(el){
   if (!el || el === document.body || !document.contains(el)) return null;
   if (el.id) return "#" + CSS.escape(el.id);
@@ -829,6 +904,7 @@ function render(){
     $("#feedback-home").hidden = tab === "spots";
     $("#view-events").hidden = !eventsOn;
     renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
+    renderTonight(); renderMapView();
     if (eventsOn) renderEvents();
   });
   remember();
@@ -1219,9 +1295,254 @@ $("#ev-form").addEventListener("submit", e => {
   for (const id of ["#ev-name", "#ev-time", "#ev-link"]) $(id).value = "";
 });
 
+/* ---------- tonight: a one-tap "open tonight" filter ----------
+   Most spots don't list hours, so this is a best guess, labeled that way in the page:
+   1. Hours we found (NIGHT_HOURS below, or an "hours" string on a spot) win.
+   2. Otherwise a spot's "closed" weekdays (0 = Sunday) rule out those nights.
+   3. Otherwise the kind of place decides: restaurants, dessert and indoor activities are assumed open about 5–10 PM,
+      bars and lounges about 5 PM–1 AM, and anything whose note says it's open late until 2 AM. Brunch, coffee shops
+      (unless the note says late or cocktails), bakeries, daytime-only notes, outdoor and daytime activities, game-day teams
+      and "opening soon" spots are left out.
+   A spot counts if it's open for at least 30 minutes between now (or 5 PM, if that's later) and 3 AM. Birmingham time.
+   Hours format: "Mo-Fr 17:00-22:00; Sa 17:00-01:00". Days not listed are closed. "eve" = open in the evening, time unknown. */
+const NIGHT_HOURS = {
+  // Hours checked Nov 23, 2026 on each spot's own site or its current listings.
+  "s-alicias-coffee": "Mo-Sa 07:00-16:00",
+  "s-bandit-patisserie": "Mo-Su 07:30-14:00",
+  "s-big-spoon-creamery": "Su-Th 12:00-21:00; Fr-Sa 12:00-22:00",
+  "s-burning-tree-bbq": "Mo-Sa 10:30-20:00",
+  "s-cafe-dupont": "Tu-Sa eve",
+  "s-carlile-s-bbq": "Mo-Fr 10:30-15:00",
+  "s-center-point-food-truck-park": "Sa-Su 12:00-17:00",
+  "s-chez-fonfon": "Tu-Sa eve",
+  "s-demetri-s-bbq": "Mo-Sa 06:00-16:00; Su 09:30-14:00",
+  "s-eagles-restaurant": "Tu-Fr,Su 10:30-15:30",
+  "s-eighty-eight": "Tu-Su late",
+  "s-high-dive": "We-Su late",
+  "s-hold-your-horses": "Tu-Su 17:00-24:00",
+  "s-johnnys-homewood": "Su-Fr 11:00-14:30",
+  "s-mama-nem-southern-kitchen": "Mo-Sa 06:30-19:00; Su 11:00-19:00",
+  "s-moon-shine-at-the-elyton-hotel": "Tu-Sa late",
+  "s-nelson-brothers-cafe": "Mo-Fr 08:30-15:00; Sa 09:00-15:00",
+  "s-nightcap": "Tu-Th 17:00-23:00; Fr-Sa 17:00-24:00",
+  "s-paper-doll": "Tu-Th 17:00-22:00; Fr-Sa 17:00-01:00",
+  "s-pepper-place-market": "Sa 07:00-12:00",
+  "s-pogo": "Tu-Sa late",
+  "s-ruby-sunshine": "Mo-Fr 07:00-14:00; Sa-Su 07:00-15:00",
+  "s-ruth-s-cafe": "Tu-Th 06:00-18:30; Fr 07:00-18:30; Sa 07:00-19:00; Su 11:00-17:00",
+  "s-simones-thirsty-thursday": "Th 15:00-22:00",
+  "s-skates-280": "Fr-Su late",
+  "s-the-bright-star": "Tu-Su eve",
+  "s-the-daily-edition": "Mo-Su 07:00-13:00",
+  "s-yamayas-tea-n-spice": "We-Sa 11:00-21:00; Su 12:00-18:00",
+  "s-yo-mama-s": "Mo-Fr 10:30-14:30",
+};
+const NIGHT_DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+const hm = t => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
+// Parse an hours string into 7 lists of [open, close] minutes (close past midnight is > 1440).
+function parseHours(str){
+  const week = [[],[],[],[],[],[],[]];
+  for (const part of String(str).split(";")) {
+    const m = part.trim().match(/^([A-Za-z,\-]+)\s+(eve|late|\d{1,2}:\d{2}-\d{1,2}:\d{2})$/); if (!m) return null;
+    const days = new Set();
+    for (const seg of m[1].split(",")) {
+      const [a, b] = seg.split("-").map(d => NIGHT_DAYS.indexOf(d));
+      if (a < 0 || (b !== undefined && b < 0)) return null;
+      for (let d = a, n = 0; n < 7; d = (d + 1) % 7, n++) { days.add(d); if (b === undefined || d === b) break; }
+    }
+    let span;
+    if (m[2] === "eve") span = [hm("17:00"), hm("22:00")];
+    else if (m[2] === "late") span = [hm("17:00"), hm("25:00")];
+    else { const [o, c] = m[2].split("-").map(hm); span = [o, c <= o ? c + 1440 : c]; }
+    for (const d of days) week[d].push(span);
+  }
+  return week;
+}
+const hoursCache = new Map();
+function knownHours(s){
+  const str = typeof s.hours === "string" && s.hours ? s.hours : NIGHT_HOURS[s.id];
+  if (!str) return null;
+  if (!hoursCache.has(str)) hoursCache.set(str, parseHours(str));
+  return hoursCache.get(str);
+}
+// Birmingham clock. Before 4 AM still counts as the night before.
+function nightNow(now = new Date()){
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone:"America/Chicago", weekday:"short", hour:"numeric", minute:"numeric", year:"numeric", month:"2-digit", day:"2-digit", hourCycle:"h23"})
+    .formatToParts(now).map(p => [p.type, p.value]));
+  let day = NIGHT_DAYS.indexOf(parts.weekday.slice(0, 2)), min = Number(parts.hour) * 60 + Number(parts.minute);
+  let date = new Date(Date.UTC(+parts.year, +parts.month - 1, +parts.day));
+  if (min < 240) { day = (day + 6) % 7; min += 1440; date = new Date(date.getTime() - 864e5); }
+  return {day, min, ymd:date.toISOString().slice(0, 10), date};
+}
+const LATE_NOTE = /\b(open late|late[- ]night|loud late|until (?:1[0-2]|midnight|2 ?am)|until \d+ ?am)\b/i;
+const DAYTIME_SPOT = /\b(museum|institute|science center|zoo|botanical|gardens?|hall of fame|spa|massage|hike|preserve|market|trail rides?|carriages?|paintball|tour|class|calendar|food truck)\b/i;
+const GAME_DAYS = /\b(barons|legion|bulls|blazers|stallions|racing)\b/i;
+const DAYTIME_NOTE = /\b(daytime|lunch only|breakfast and lunch|bakery|patisserie|pastries)\b/i;
+// Usual evening window for a spot without listed hours, or null if it's not a night spot.
+function guessSpan(s){
+  const text = `${s.name || ""} ${s.note || ""}`;
+  const late = LATE_NOTE.test(s.note || "");
+  if (s.category === "brunch" || DAYTIME_NOTE.test(text)) return null;
+  if (s.category === "coffee") return late || /cocktail|bar from/i.test(s.note || "") ? [hm("17:00"), late ? hm("26:00") : hm("22:00")] : null;
+  if (s.category === "activity") {
+    if (GAME_DAYS.test(text) || DAYTIME_SPOT.test(text)) return null;
+    if (s.setting === "outdoor" && !late) return null;
+  }
+  if (late) return [hm("17:00"), hm("26:00")];
+  if (s.category === "bar" || s.category === "lounge") return [hm("17:00"), hm("25:00")];
+  return [hm("17:00"), hm("22:00")];
+}
+// Open for 30+ minutes between now (or 5 PM) and 3 AM tonight?
+function tonightSpan(s, nn = nightNow()){
+  if (s.soon) return null;
+  const from = Math.max(nn.min, hm("17:00")), to = hm("27:00");
+  const fits = span => span && Math.min(span[1], to) - Math.max(span[0], from) >= 30;
+  const week = knownHours(s);
+  if (week) return week[nn.day].find(fits) || null;
+  if (Array.isArray(s.closed) && s.closed.includes(nn.day)) return null;
+  const g = guessSpan(s);
+  return fits(g) ? g : null;
+}
+const openTonight = s => !!tonightSpan(s);
+const clock = m => { m %= 1440; const h = Math.floor(m / 60), mm = m % 60; return m === 0 ? "midnight" : `${h % 12 || 12}${mm ? ":" + String(mm).padStart(2, "0") : ""} ${h < 12 ? "AM" : "PM"}`; };
+// "Open until 11 PM" when we know the real hours, "Likely open tonight" when it's a guess.
+function tonightLine(s){
+  const span = tonightSpan(s); if (!span) return "";
+  const week = knownHours(s), str = typeof s.hours === "string" && s.hours ? s.hours : NIGHT_HOURS[s.id];
+  return week && /\d:\d\d-\d/.test(str) ? `Open until ${clock(span[1])}` : "Likely open tonight";
+}
+// Featured and coming-up events whose day (Birmingham time) is tonight and that haven't ended.
+function eventsTonight(now = new Date()){
+  const nn = nightNow(now);
+  const dayOf = iso => nightNow(new Date(iso)).ymd;
+  const feat = featuredLive(now).filter(e => dayOf(e.start) === nn.ymd).map(e => ({...e, kind:"feat"}));
+  const up = upcomingLive(now).filter(e => dayOf(e.start) === nn.ymd).map(e => ({...e, kind:"up"}));
+  return [...feat, ...up].sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+// Spots the Build view shows for this kind of night with the current filters.
+const shownSpots = () => spots.filter(s => O().slots.some(slot => inCats(s, slot.cats)) && passes(s));
+function renderTonight(){
+  const box = $("#tonight");
+  box.hidden = !tonight || tab === "spots";
+  if (box.hidden) { box.innerHTML = ""; return; }
+  const nn = nightNow();
+  const dayWord = nn.date.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric", timeZone:"UTC"});
+  const n = shownSpots().length;
+  const evs = eventsTonight();
+  const evHtml = evs.length ? `<div class="tn-events"><h3>🎟️ Happening tonight</h3>${evs.map(e => {
+      const dir = e.address ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(`${e.venue || ""}, ${e.address}`) : "";
+      return `<article class="ev-up"><span class="when">${esc(featuredWhen(e))}${e.venue ? ` · ${esc(e.venue)}` : ""}</span><b>${esc(e.name)}</b>
+        <div class="ev-links">${safeUrl(e.url) ? `<a class="btn primary small" href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.cta || "Tickets")} ↗</a>` : ""}
+        <button type="button" class="btn small" ${e.kind === "feat" ? `data-evfeat="${esc(e.id)}"` : `data-evup="${esc(e.id)}"`}>Add to my night</button>
+        ${safeUrl(dir) ? `<a class="btn ghost small" href="${esc(dir)}" target="_blank" rel="noopener">Directions ↗</a>` : ""}</div></article>`;
+    }).join("")}</div>`
+    : `<div class="tn-none"><span class="hint">No events on our list tonight.</span><button type="button" class="btn ghost small" data-tonight-events>See this weekend's events</button></div>`;
+  box.innerHTML = `<div class="tn-head"><h2>🌙 Open <em>tonight</em> · ${esc(dayWord)}</h2><span class="hint">${n} spot${n === 1 ? "" : "s"} likely open</span></div>
+    <p class="hint">A best guess from listed hours and closed days. Hours can change, so check before you go.</p>${evHtml}`;
+}
+
+/* ---------- map view: Leaflet, loaded the first time someone opens the map ---------- */
+const LEAFLET = {
+  css:{href:"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", integrity:"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="},
+  js:{src:"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js", integrity:"sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="},
+};
+let leafletJob = null, mapObj = null, mapLayer = null, mapKey = "";
+function loadLeaflet(){
+  if (window.L && window.L.map) return Promise.resolve(window.L);
+  if (leafletJob) return leafletJob;
+  leafletJob = new Promise((resolve, reject) => {
+    const css = document.createElement("link");
+    Object.assign(css, {rel:"stylesheet", href:LEAFLET.css.href, integrity:LEAFLET.css.integrity, crossOrigin:""});
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    Object.assign(js, {src:LEAFLET.js.src, integrity:LEAFLET.js.integrity, crossOrigin:"", async:true});
+    js.onload = () => window.L ? resolve(window.L) : reject(new Error("leaflet"));
+    js.onerror = () => { leafletJob = null; js.remove(); reject(new Error("leaflet")); };
+    document.head.appendChild(js);
+  });
+  return leafletJob;
+}
+const hasCoords = s => Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lng)) && s.lat !== "" && s.lng !== "" && s.lat != null && s.lng != null;
+function mapMsg(text){ const el = $("#map-msg"); el.hidden = !text; el.textContent = text || ""; }
+function popupHtml(s){
+  const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+  const line = tonight ? tonightLine(s) : "";
+  return `<b>${esc(s.name)}</b>${soonTag(s)}<span class="meta">${[CATS[s.category] ? CATS[s.category].label : "", s.area ? esc(s.area) : "", money(s.price)].filter(Boolean).join(" · ")}</span>
+    ${line ? `<span class="open">${esc(line)}</span>` : ""}
+    <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span>
+    <button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details &amp; add</button>`;
+}
+function renderMapView(){
+  const onBuild = tab === "build" && !eventsOn;
+  $("#viewbar").hidden = !onBuild;
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === viewMode));
+  const showMap = onBuild && viewMode === "map";
+  if (onBuild) $("#view-build").hidden = showMap;
+  $("#view-map").hidden = !showMap;
+  const list = onBuild ? shownSpots() : [];
+  const pinned = list.filter(hasCoords);
+  $("#viewbar-count").textContent = onBuild ? `${list.length} spot${list.length === 1 ? "" : "s"}${showMap ? ` · ${pinned.length} on the map` : ""}` : "";
+  if (!showMap) { if ($("#map-shell").classList.contains("full")) setMapFull(false); return; }
+  const off = list.length - pinned.length;
+  $("#map-note").textContent = off ? `${off} spot${off === 1 ? "" : "s"} without an address ${off === 1 ? "isn't" : "aren't"} on the map. Tap a pin for links and to add it to your plan.` : "Tap a pin for links and to add it to your plan.";
+  if (!window.L) mapMsg("Loading the map…");
+  loadLeaflet().then(L => drawMap(L, pinned), () => mapMsg("The map couldn't load. Check your connection and try again."));
+}
+function drawMap(L, pinned){
+  if (!mapObj) {
+    mapObj = L.map("map", {zoomControl:true, attributionControl:true}).setView([33.5186, -86.8104], 11);
+    // OpenStreetMap's standard tiles, darkened to navy with CSS (.map .leaflet-tile-pane). No API key needed.
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom:19, className:"mcn-tiles",
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+    }).addTo(mapObj);
+    mapLayer = L.layerGroup().addTo(mapObj);
+  }
+  mapObj.invalidateSize();
+  const picked = new Set(Object.values(P()).filter(Boolean));
+  const key = pinned.map(s => s.id + (picked.has(s.id) ? "*" : "")).join(",") + "|" + tonight;
+  if (key === mapKey) { mapMsg(pinned.length ? "" : "Nothing here fits your filters."); return; }
+  const sameSet = mapKey.split("|")[0].replace(/\*/g, "") === key.split("|")[0].replace(/\*/g, "");
+  mapKey = key;
+  mapLayer.clearLayers();
+  // Spots at the same address get nudged apart so each pin can be tapped.
+  const seen = new Map();
+  const pts = pinned.map(s => {
+    const k = `${Number(s.lat).toFixed(5)},${Number(s.lng).toFixed(5)}`, i = seen.get(k) || 0; seen.set(k, i + 1);
+    const a = i * 2.4;
+    return {s, ll:[Number(s.lat) + (i ? Math.sin(a) * 0.00018 : 0), Number(s.lng) + (i ? Math.cos(a) * 0.00022 : 0)]};
+  });
+  for (const {s, ll} of pts) {
+    const on = picked.has(s.id);
+    L.circleMarker(ll, {radius:on ? 10 : 8, color:on ? "#F5F1E8" : "#0B1426", weight:on ? 3 : 2, fillColor:"#D4AF37", fillOpacity:.95})
+      .bindPopup(() => popupHtml(s), {maxWidth:260, autoPanPaddingTopLeft:[10, 56]})
+      .bindTooltip(s.name, {direction:"top", offset:[0, -8]})
+      .addTo(mapLayer);
+  }
+  mapMsg(pts.length ? "" : "Nothing here fits your filters.");
+  if (pts.length && !sameSet) mapObj.fitBounds(L.latLngBounds(pts.map(p => p.ll)), {padding:[36, 36], maxZoom:15});
+}
+function setMapFull(on){
+  const shell = $("#map-shell"); shell.classList.toggle("full", on);
+  document.body.classList.toggle("map-open", on);
+  const b = $("#map-fs"); b.textContent = on ? "✕ Close" : "⤢ Full screen"; b.setAttribute("aria-pressed", on);
+  if (mapObj) setTimeout(() => mapObj.invalidateSize(), 50);
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "tonight-toggle") { tonight = !tonight; render(); return; }
+  if (t.dataset.view) { viewMode = t.dataset.view === "map" ? "map" : "list"; render(); return; }
+  if (t.id === "map-fs") { setMapFull(!$("#map-shell").classList.contains("full")); return; }
+  if (t.dataset.tonightEvents !== undefined) { openEvents(false); return; }
+  if (t.dataset.qpick && t.closest(".leaflet-popup") && mapObj) mapObj.closePopup();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#map-shell").classList.contains("full") && !document.querySelector("dialog[open]")) setMapFull(false); });
+// Tonight depends on the clock, so refresh it every few minutes while it's on.
+setInterval(() => { if (tonight && !document.hidden) render(); }, 5 * 60 * 1000);
+
 /* ---------- pull down to reset ---------- */
 function resetEverything(){
-  mood = ""; grown = false; cuisines = [];
+  mood = ""; grown = false; cuisines = []; tonight = false;
   $("#f-budget").value = "4"; $("#f-area").value = ""; $("#f-setting").value = ""; $("#f-dress").value = "";
   $("#q").value = ""; renderResults();
   picks[outing] = {}; locks[outing] = {}; planEvents[outing] = null;
@@ -1233,7 +1554,7 @@ function resetEverything(){
   const ptr = $("#ptr"), label = ptr.querySelector(".ptr-text");
   const DEAD = 12, TRIGGER = 70, MAX = 110;   // px: ignore tiny nudges, distance to arm, how far the pill travels
   let startX = 0, startY = 0, tracking = false, armed = false, dist = 0, frame = 0;
-  const skip = el => el.closest("input, textarea, select, dialog, .rail, .chips, .search-results, #view-events .ev-grid");
+  const skip = el => el.closest("input, textarea, select, dialog, .rail, .chips, .search-results, #view-events .ev-grid, .map-shell");
   const paint = () => {
     frame = 0;
     ptr.style.transform = `translate(-50%, ${Math.min(dist, MAX) - 90}px)`;
@@ -1540,7 +1861,7 @@ render();
           let changed = false;
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
-            for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            for (const k of ["website","reserve","address","area","cuisine","lat","lng","closed"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
             if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
             // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
