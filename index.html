@@ -673,8 +673,11 @@ const CATS = {
 };
 const CUISINES = {
   soul:"🍗 Soul & Southern", bbq:"🔥 BBQ", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
-  italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American"
+  italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American", vegan:"🌱 Vegan", health:"🥗 Health"
 };
+/* Diet chips. A spot keeps one main "cuisine" and can carry extra tags (tags:["vegan","health"]).
+   "all-vegan" marks a fully vegan kitchen. Diet chips also narrow brunch, coffee and dessert spots. */
+const DIET = ["vegan", "health"], DIET_CATS = ["brunch", "coffee", "dessert"];
 const OUTINGS = {
   date:{name:"Date night", headline:"Build a <em>Birmingham</em> date", sub:"Pick your spots, or let it surprise you. Food, something to do, dessert, then a lounge.", roll:"Can't decide on a date?", rollText:"Roll the whole night from your spots. Lock the ones you like and roll again to swap the rest.", text:"Date night in Birmingham",
     slots:[{id:"food",label:"Food",cats:["food"]},{id:"activity",label:"Activity",cats:["activity"]},{id:"dessert",label:"Dessert",cats:["dessert"]},{id:"lounge",label:"Lounge",cats:["lounge"]}]},
@@ -747,7 +750,11 @@ const money = n => Number(n) ? "$".repeat(Math.max(1, Math.min(4, Number(n)))) :
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
 const cuisineWord = s => s.category === "food" && CUISINES[s.cuisine] ? CUISINES[s.cuisine].replace(/^\S+\s/, "") : "";
-const metaLine = s => [cuisineWord(s), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const tagsOf = s => Array.isArray(s.tags) ? s.tags : [];
+const foodKeys = s => [s.cuisine, ...tagsOf(s)].filter(Boolean);
+// "100% vegan" only for fully vegan kitchens; other tagged spots say "vegan options".
+const dietWord = s => { const t = tagsOf(s); return [t.includes("all-vegan") ? "100% vegan" : t.includes("vegan") && s.cuisine !== "vegan" ? "vegan options" : "", t.includes("health") && s.cuisine !== "health" ? "healthy picks" : ""].filter(Boolean).join(" · "); };
+const metaLine = s => [cuisineWord(s), dietWord(s), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -772,7 +779,19 @@ try {
 function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines, planEvents})); } catch(e) {} }
 
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
-function passes(s){
+// Food type chips. As a restaurant (its category or an "also" stop), a spot must match a picked chip by cuisine or tag.
+// Vegan and Health also narrow brunch, coffee and dessert spots. Activities, bars and lounges aren't affected.
+// cats: the stop's categories, so a bar that also serves food is judged as food only in a food stop.
+function cuisineOk(s, cats){
+  if (!cuisines.length) return true;
+  const keys = foodKeys(s);
+  const roles = [s.category, ...(Array.isArray(s.also) ? s.also : [])].filter(c => !cats || cats.includes(c));
+  if (roles.includes("food")) return cuisines.some(k => keys.includes(k));
+  const diet = cuisines.filter(k => DIET.includes(k));
+  if (diet.length && roles.some(c => DIET_CATS.includes(c))) return diet.some(k => keys.includes(k));
+  return true;
+}
+function passes(s, cats){
   const f = filters();
   if (Number(s.price) && Number(s.price) > f.budget) return false;
   if (f.area && (s.area||"").trim().toLowerCase() !== f.area.trim().toLowerCase()) return false;
@@ -780,8 +799,7 @@ function passes(s){
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
   if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
   if (grown && !s.grown) return false;
-  // Food type only narrows restaurants; dessert, bars and the rest aren't affected.
-  if (cuisines.length && s.category === "food" && !cuisines.includes(s.cuisine)) return false;
+  if (!cuisineOk(s, Array.isArray(cats) ? cats : null)) return false;
   if (tonight && !openTonight(s)) return false;
   return true;
 }
@@ -817,6 +835,7 @@ function renderHeader(){
 
 function renderCuisines(){
   const have = new Set(spots.filter(s => s.category === "food" && s.cuisine).map(s => s.cuisine));
+  for (const s of spots) for (const t of tagsOf(s)) if (DIET.includes(t)) have.add(t);
   const keys = Object.keys(CUISINES).filter(k => have.has(k) || cuisines.includes(k));
   const row = $("#cuisine-chips"), x = row.scrollLeft;
   row.innerHTML = `<button data-cuisine="" aria-pressed="${!cuisines.length}">All food</button>` +
@@ -839,7 +858,7 @@ function renderBuild(){
   view.innerHTML = O().slots.map(slot => {
     const all = spots.filter(s => inCats(s, slot.cats));
     const taken = takenElsewhere(slot.id);
-    const list = all.filter(s => passes(s) && !taken.has(s.id)).sort(soonLast);
+    const list = all.filter(s => passes(s, slot.cats) && !taken.has(s.id)).sort(soonLast);
     const word = slot.cats.map(c => CATS[c].plural.toLowerCase()).join(" or ");
     const body = list.length
       ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
@@ -997,7 +1016,7 @@ setupFeedback();
 
 /* ---------- actions ---------- */
 function roll(){
-  const usable = spots.filter(passes);
+  const usable = spots.filter(s => O().slots.some(sl => inCats(s, sl.cats) && passes(s, sl.cats)));
   if (!usable.length) { toast(spots.length ? "No spots fit those filters" : "Add some spots first"); return; }
   // keep locked picks, clear the rest, then fill without repeats
   for (const slot of O().slots) if (!(L()[slot.id] && spotById(P()[slot.id]))) { fresh.add(slot.id); }
@@ -1006,7 +1025,7 @@ function roll(){
   for (const slot of O().slots) {
     if (!fresh.has(slot.id)) continue;
     const taken = takenElsewhere(slot.id);
-    const pool = usable.filter(s => inCats(s, slot.cats) && !s.soon && !taken.has(s.id));
+    const pool = spots.filter(s => inCats(s, slot.cats) && passes(s, slot.cats) && !s.soon && !taken.has(s.id));
     if (!pool.length) continue;
     const others = pool.filter(s => s.id !== prev[slot.id]);
     const from = others.length ? others : pool;
@@ -1033,7 +1052,7 @@ const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLow
 function haystack(s){
   const c = CATS[s.category] || {};
   const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
-  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1400,6 +1419,33 @@ $("#ev-form").addEventListener("submit", e => {
    Hours format: "Mo-Fr 17:00-22:00; Sa 17:00-01:00". Days not listed are closed. "eve" = open in the evening, time unknown. */
 const NIGHT_HOURS = {
   // Hours checked Nov 23, 2026 on each spot's own site or its current listings.
+  // Vegan and health spots (added Nov 23, 2026):
+  "s-aww-shucks": "Mo-Fr 11:00-17:30",
+  "s-baha-burger-hoover": "Tu-Sa 11:00-21:00; Su 11:00-20:00",
+  "s-bay-leaf-five-points": "Tu-Su 11:00-14:00; Mo-Th 16:00-21:30; Fr-Sa 16:00-22:00; Su 16:00-21:00",
+  "s-blueroot": "Mo-Fr 11:00-15:00",
+  "s-chop-n-fresh": "Mo-Sa 10:30-20:00; Su 10:30-19:00",
+  "s-chopt-vestavia": "Mo-Sa 10:30-20:00; Su 11:00-20:00",
+  "s-culinary-dropout": "Mo-Fr 11:00-23:00; Sa 10:00-23:00; Su 10:00-22:00",
+  "s-curry-corner": "Mo-Su 11:00-14:30; Mo-Su 16:00-21:00",
+  "s-drink-freshh-juice-bar": "Mo-Fr 08:30-18:00; Sa 10:00-18:00",
+  "s-elis-jerusalem-grill": "Mo,We-Sa 10:30-20:00; Su 11:00-19:00",
+  "s-farm-bowl-homewood": "Mo-Fr 07:00-19:00; Sa-Su 08:00-19:00",
+  "s-golden-temple-cafe": "Mo-Fr 11:00-14:30",
+  "s-good-health-to-be-hail": "Sa 12:00-15:00",
+  "s-juniper": "Mo-Th 16:00-22:30; Fr-Sa 16:00-24:00; Sa-Su 10:00-14:00",
+  "s-kale-me-crazy-homewood": "Mo-Fr 07:00-18:00; Sa 09:00-18:00; Su 11:00-18:00",
+  "s-makarios-kabob-grill": "Su-Th 10:00-22:00; Fr-Sa 10:00-23:00",
+  "s-masaman-thai-kitchen": "Mo-Th 11:00-21:00; Fr 11:00-21:30; Sa 12:00-21:00",
+  "s-mellow-mushroom-southside": "Su-Th 11:00-22:00; Fr-Sa 11:00-23:00",
+  "s-melt-hoover": "Mo-Su 10:30-21:00",
+  "s-nori-hibachi-hoover": "Tu-Th 11:00-21:00; Fr-Sa 11:00-22:00; Su 12:00-21:00",
+  "s-okinawa-homewood": "Mo-Fr 11:00-15:00; Mo-Th 16:30-20:30; Fr 16:30-21:00; Sa 12:00-21:00; Su 12:00-20:30",
+  "s-real-and-rosemary-homewood": "Mo-Sa 11:00-20:00",
+  "s-rojo": "Tu-Th 11:00-22:00; Fr 11:00-24:00; Sa-Su 11:00-22:00",
+  "s-solcial-veg": "Sa-Su 10:00-15:00",
+  "s-the-rougaroux": "Mo-Sa 11:00-21:00",
+  "s-wooden-city": "Su-Th 17:00-22:00; Fr-Sa 17:00-23:00",
   "s-alicias-coffee": "Mo-Sa 07:00-16:00",
   "s-bandit-patisserie": "Mo-Su 07:30-14:00",
   "s-bar-sebastian": "Tu-Th 17:00-20:30; Fr-Sa 17:00-23:30; Su 12:00-15:00",
@@ -1515,7 +1561,7 @@ function eventsTonight(now = new Date()){
   return [...feat, ...up].sort((a, b) => new Date(a.start) - new Date(b.start));
 }
 // Spots the Build view shows for this kind of night with the current filters.
-const shownSpots = () => spots.filter(s => O().slots.some(slot => inCats(s, slot.cats)) && passes(s)).sort(soonLast);
+const shownSpots = () => spots.filter(s => O().slots.some(slot => inCats(s, slot.cats) && passes(s, slot.cats))).sort(soonLast);
 function renderTonight(){
   const box = $("#tonight");
   box.hidden = !tonight || tab === "spots";
@@ -2015,6 +2061,9 @@ render();
             const f = fresh.get(sp.id); if (!f) continue;
             for (const k of ["website","reserve","address","area","cuisine","lat","lng","closed"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
+            // Diet tags (vegan, health) and extra stop types come from the starter list.
+            if (Array.isArray(f.tags) && JSON.stringify(sp.tags || []) !== JSON.stringify(f.tags)) { sp.tags = [...f.tags]; changed = true; }
+            if (Array.isArray(f.also) && !Array.isArray(sp.also)) { sp.also = [...f.also]; changed = true; }
             if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
             // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
             const old = STARTER_OLD[sp.id];
