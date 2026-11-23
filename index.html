@@ -754,7 +754,8 @@ const tagsOf = s => Array.isArray(s.tags) ? s.tags : [];
 const foodKeys = s => [s.cuisine, ...tagsOf(s)].filter(Boolean);
 // "100% vegan" only for fully vegan kitchens; other tagged spots say "vegan options".
 const dietWord = s => { const t = tagsOf(s); return [t.includes("all-vegan") ? "100% vegan" : t.includes("vegan") && s.cuisine !== "vegan" ? "vegan options" : "", t.includes("health") && s.cuisine !== "health" ? "healthy picks" : ""].filter(Boolean).join(" · "); };
-const metaLine = s => [cuisineWord(s), dietWord(s), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const placeTags = s => tagsOf(s).filter(t => !DIET.includes(t) && t !== "all-vegan");
+const metaLine = s => [cuisineWord(s), dietWord(s), ...placeTags(s).map(esc), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -1052,7 +1053,7 @@ const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLow
 function haystack(s){
   const c = CATS[s.category] || {};
   const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
-  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1446,6 +1447,8 @@ const NIGHT_HOURS = {
   "s-solcial-veg": "Sa-Su 10:00-15:00",
   "s-the-rougaroux": "Mo-Sa 11:00-21:00",
   "s-wooden-city": "Su-Th 17:00-22:00; Fr-Sa 17:00-23:00",
+  // Food trucks (added Nov 23, 2026):
+  "s-the-current-at-cahaba": "Tu-We 17:00-21:00; Th-Sa 11:00-21:00; Su 11:00-18:00",
   "s-alicias-coffee": "Mo-Sa 07:00-16:00",
   "s-bandit-patisserie": "Mo-Su 07:30-14:00",
   "s-bar-sebastian": "Tu-Th 17:00-20:30; Fr-Sa 17:00-23:30; Su 12:00-15:00",
