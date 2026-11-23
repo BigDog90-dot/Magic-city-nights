@@ -185,6 +185,17 @@ body.events-mode .wrap > :is(.mood,.search,.cuisines,.filters,.tabs,#view-build,
 .add-event:hover{background:var(--sel)}
 .ev-featured{display:grid;gap:12px}
 .ev-featured:empty{display:none}
+.soon{display:inline-block;justify-self:start;align-self:start;margin:2px 0;padding:2px 8px;border:1px solid var(--accent);border-radius:999px;color:var(--accent);background:var(--sel);font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;line-height:1.5;white-space:nowrap}
+.q-item .soon{margin-left:8px;vertical-align:middle}
+.ev-upcoming{display:grid;gap:10px}
+.ev-upcoming:empty{display:none}
+.ev-upcoming h3{font-family:var(--serif);font-weight:700;font-size:1.15rem}
+.ev-up{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;gap:6px;min-width:0}
+.ev-up .when{font-size:.82rem;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.ev-up b{font-size:1.02rem;line-height:1.3}
+.ev-up p{margin:0;color:var(--muted);font-size:.88rem}
+.ev-up .ev-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.ev-up .ev-links .btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;flex:1 1 auto;text-align:center}
 .ev-feat{position:relative;background:linear-gradient(160deg,var(--sel),var(--surface) 70%);border:1.5px solid var(--accent);border-radius:20px;padding:16px;display:grid;gap:10px;min-width:0}
 .ev-feat .ev-tag{justify-self:start;background:var(--accent);color:var(--accent-fg);font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:4px 10px}
 .ev-feat h3{font-family:var(--serif);font-weight:700;font-size:1.35rem;line-height:1.2}
@@ -198,6 +209,17 @@ body.events-mode .wrap > :is(.mood,.search,.cuisines,.filters,.tabs,#view-build,
 /* Email signup (Kit form). Kit injects its own styles, so these override them to match the site. */
 .signup{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:linear-gradient(165deg,var(--sel),var(--surface) 65%);gap:6px}
 .signup:not(.ready){display:none}
+.feedback{display:grid;justify-items:center;gap:10px;text-align:center;padding:8px 0 4px;position:relative}
+.feedback p{margin:0;color:var(--muted);font-size:.9rem}
+.fb-btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--serif);font-weight:700;font-size:1.02rem;cursor:pointer}
+.fb-btn:hover,.fb-btn[aria-expanded="true"]{background:var(--sel)}
+.fb-btn:focus-visible,.fb-menu a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fb-menu{width:min(100%,360px);display:grid;gap:4px;padding:8px;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:18px;text-align:left}
+.fb-menu[hidden]{display:none}
+.fb-menu a{display:grid;gap:2px;padding:12px 14px;border-radius:12px;color:var(--fg);text-decoration:none;min-height:44px}
+.fb-menu a:hover{background:var(--sel)}
+.fb-menu a b{font-weight:700;font-size:.98rem}
+.fb-menu a span{color:var(--muted);font-size:.82rem}
 .signup .eyebrow{color:var(--accent)}
 #signup .formkit-form{background:transparent !important;border:0 !important;box-shadow:none !important;max-width:none !important;width:100% !important;margin:0 !important;font-family:var(--body) !important;color:var(--fg) !important}
 #signup .formkit-form [data-style],#signup .formkit-form [data-element="column"],#signup .formkit-form .formkit-column{padding:0 !important;background:transparent !important}
@@ -332,6 +354,7 @@ body.shared #headline, body.shared #subline{display:none}
     <div class="ev-bar"><span class="ev-when" id="ev-when"></span><button type="button" class="btn ghost small" id="ev-back">← Back to planning</button></div>
     <p class="hint" id="ev-intro"></p>
     <div class="ev-featured" id="ev-featured"></div>
+    <div class="ev-upcoming" id="ev-upcoming"></div>
     <div class="ev-grid" id="ev-grid"></div>
     <div class="card ev-add-card">
       <h2>Got tickets? Add it to your night</h2>
@@ -401,6 +424,8 @@ body.shared #headline, body.shared #subline{display:none}
     <script async data-uid="1e025ae7f2" src="https://magic-7.kit.com/1e025ae7f2/index.js"></script>
   </section>
 
+  <section class="feedback" id="feedback-home" data-feedback aria-label="Feedback and suggestions"></section>
+
   <section id="view-spots" hidden style="display:grid;gap:18px">
     <div class="card">
       <h2>Add a spot</h2>
@@ -446,6 +471,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
     <div class="card">
       <div class="row"><h2>Your spots</h2><span class="hint" id="spot-count"></span></div>
       <div id="spot-list" class="list"></div>
+      <section class="feedback" data-feedback aria-label="Feedback and suggestions"></section>
     </div>
 
     <div class="card">
@@ -478,7 +504,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
 
 <dialog class="invite" id="spot-detail" aria-labelledby="sd-name">
   <div class="sd">
-    <span class="badge" id="sd-cat"></span>
+    <span class="badge" id="sd-cat"></span><span class="soon" id="sd-soon" hidden>Opening soon</span>
     <h2 id="sd-name"></h2>
     <p class="hint" id="sd-meta"></p>
     <p id="sd-note" hidden></p>
@@ -531,6 +557,10 @@ const SAMPLES = [
   {category:"lounge",name:"Sample: hookah lounge",price:2,area:"Lakeview",setting:"indoor",dress:"casual",mood:"social"},
 ];
 
+/* Starter spots that closed for good, and the old values of starter spots that were renamed or moved.
+   Browsers that saved the list earlier get these fixes on their next visit. */
+const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house"];
+const STARTER_OLD = {"s-bygones": {"note": "Cocktail bar in the Battery II building. Check hours before you go"}, "s-cassanova": {"name": "Cassanova Bar and Lounge", "address": "2312 1st Ave N", "area": "Downtown", "note": "Hookah, inventive drinks, photo spots. From a 2022 list, so check it's open"}, "s-dzire": {"name": "Dzire Bar and Lounge", "note": "Hookah lounge. Look it up before you go"}, "s-habitat-feed-social": {"note": "Rooftop at the Grand Bohemian Hotel. Reserve a sunset table"}, "s-high-dive": {"name": "High Dive"}, "s-jasmine-s-soul-food": {"name": "Jasmine's Soul Food"}, "s-k-j-s-elegant-pastries": {"area": "Downtown"}, "s-k1-speed": {"address": "5421 Beacon Dr"}, "s-mo-s-carriages-and-trail-rides": {"area": "McCalla"}, "s-obsidian": {"note": "Upscale cocktail and sushi lounge from Johin'na's owner, connected to Johin'na. Was aiming to open around October 2026, so check it's open"}, "s-premiere-cinema-on-lakeshore": {"name": "Premiere Cinema on Lakeshore"}, "s-sips-n-strokes": {"name": "Sips n Strokes"}, "s-snapper-grabber-land-sea-market-cafe": {"name": "Snapper Grabber Land & Sea Market & Cafe"}, "s-the-alabama-biscuit-co": {"address": "4133 White Oak Dr", "area": "Crestline"}, "s-the-lodge": {"note": "Hidden speakeasy inside Fairway Social at Urban Supply by Railroad Park. Solve a coded message to find the door. Duckpin bowling, live music. Check it's open"}};
 let spots = [], nights = [];
 let outing = "date";
 let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
@@ -551,7 +581,7 @@ function saveLocal(){ if (!local) return; try { localStorage.setItem(LOCAL_KEY, 
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const money = n => "$".repeat(Math.max(1, Math.min(4, Number(n)||2)));
+const money = n => Number(n) ? "$".repeat(Math.max(1, Math.min(4, Number(n)))) : "";
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
 const cuisineWord = s => s.category === "food" && CUISINES[s.cuisine] ? CUISINES[s.cuisine].replace(/^\S+\s/, "") : "";
@@ -582,7 +612,7 @@ function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
 function passes(s){
   const f = filters();
-  if ((Number(s.price)||2) > f.budget) return false;
+  if (Number(s.price) && Number(s.price) > f.budget) return false;
   if (f.area && (s.area||"").trim().toLowerCase() !== f.area.trim().toLowerCase()) return false;
   if (f.setting && s.setting && s.setting !== "both" && s.setting !== f.setting) return false;
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
@@ -593,6 +623,10 @@ function passes(s){
   return true;
 }
 const spotById = id => spots.find(s => s.id === id);
+// A spot fits a stop by its own category, or any extra ones in `also` (a taqueria that also does brunch).
+const inCats = (s, cats) => cats.includes(s.category) || (Array.isArray(s.also) && s.also.some(c => cats.includes(c)));
+// "Opening soon" spots show a badge and are left out of surprise rolls.
+const soonTag = s => s.soon ? `<span class="soon">Opening soon</span>` : "";
 const takenElsewhere = slotId => new Set(Object.entries(P()).filter(([k,v]) => k !== slotId && v).map(([,v]) => v));
 
 function toast(msg){
@@ -636,13 +670,13 @@ function renderBuild(){
   const keep = {};
   view.querySelectorAll(".rail[data-rail]").forEach(r => { keep[r.dataset.rail] = r.scrollLeft; });
   view.innerHTML = O().slots.map(slot => {
-    const all = spots.filter(s => slot.cats.includes(s.category));
+    const all = spots.filter(s => inCats(s, slot.cats));
     const taken = takenElsewhere(slot.id);
     const list = all.filter(s => passes(s) && !taken.has(s.id));
     const word = slot.cats.map(c => CATS[c].plural.toLowerCase()).join(" or ");
     const body = list.length
       ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
-          <b>${esc(s.name)}</b><span class="meta">${metaLine(s)}</span></button>`).join("")
+          <b>${esc(s.name)}</b>${soonTag(s)}<span class="meta">${metaLine(s)}</span></button>`).join("")
       : `<div class="empty-rail">${all.length ? (all.every(s => taken.has(s.id)) ? `Add more ${word} so this stop has its own pick.` : "Nothing here fits your filters.") : `No ${word} yet. Add some in <b>My spots</b>.`}</div>`;
     return `<div class="cat"><div class="cat-head"><span class="dot" style="background:${color(slot.cats[0])}"></span><h3>${slot.label}</h3><span class="count">${list.length} to pick from</span></div><div class="rail" data-rail="${outing}-${slot.id}">${body}</div></div>`;
   }).join("");
@@ -664,7 +698,7 @@ function renderPlan(){
   if (el.hidden) return;
   const stops = chosenStops();
   const chosen = stops.filter(x => x.spot).map(x => x.spot);
-  const top = chosen.length ? Math.max(...chosen.map(s => Number(s.price)||2)) : 0;
+  const top = chosen.length ? Math.max(0, ...chosen.map(s => Number(s.price)||0)) : 0;
   const rows = stops.map(({slot, spot: s}) => {
     const c = s ? color(s.category) : color(slot.cats[0]);
     const side = tab === "surprise"
@@ -673,7 +707,7 @@ function renderPlan(){
     if (!s) return `<li class="stop skipped" style="--c:${c}"><span class="badge">${slot.label}</span><div class="stop-main"><b>${tab==="surprise"?"Roll to fill":"Skipped"}</b></div><span></span></li>`;
     const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
     return `<li class="stop ${fresh.has(slot.id)?"fresh":""}" style="--c:${c}"><span class="badge">${slot.label}</span>
-      <div class="stop-main">${nameLink(s)}<span class="meta">${metaLine(s)}${s.address?` · ${esc(s.address)}`:""}</span>${s.note?`<span class="meta">${esc(s.note)}</span>`:""}
+      <div class="stop-main">${nameLink(s)}${soonTag(s)}<span class="meta">${metaLine(s)}${s.address?` · ${esc(s.address)}`:""}</span>${s.note?`<span class="meta">${esc(s.note)}</span>`:""}
       <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span></div>${side}</li>`;
   }).join("");
   fresh.clear();
@@ -682,7 +716,7 @@ function renderPlan(){
       <div class="stop-main">${safeUrl(ev.u) ? `<a class="name" href="${esc(ev.u)}" target="_blank" rel="noopener">${esc(ev.n)}</a>` : `<b>${esc(ev.n)}</b>`}${ev.w ? `<span class="meta">${esc(ev.w)}</span>` : ""}
       ${safeUrl(ev.u) ? `<span class="links"><a class="reserve" href="${esc(ev.u)}" target="_blank" rel="noopener">Tickets ↗</a></span>` : ""}</div><button class="x" id="event-clear" aria-label="Remove the event">Remove</button></li>` : "";
   const any = chosen.length || ev;
-  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""} · up to ${money(top)}` : ev ? "1 event" : "Nothing picked yet"}</span></div>
+  el.innerHTML = `<div class="plan-head"><h2>Your ${O().name.toLowerCase()} plan</h2><span class="price">${chosen.length ? `${chosen.length} stop${chosen.length>1?"s":""}${top ? ` · up to ${money(top)}` : ""}` : ev ? "1 event" : "Nothing picked yet"}</span></div>
     <ol class="stops">${rows}${evRow}</ol>
     <button type="button" class="add-event" id="add-event">🎟️ ${ev ? "Change the event" : "Add an event to this night"}</button>
     <div class="row"><button class="btn primary small" id="invite-open" ${any?"":"disabled"}>Send the invite</button>
@@ -702,7 +736,7 @@ function renderSpots(){
   const hasSamples = spots.some(s => s.sample);
   list.innerHTML = (hasSamples ? `<div class="row" style="padding-bottom:10px"><button class="btn ghost small" id="clear-samples">Remove sample spots</button></div>` : "") +
     Object.keys(CATS).flatMap(k => spots.filter(s => s.category === k).sort((a,b) => a.name.localeCompare(b.name)).map(s =>
-      `<div class="item" style="--c:${color(k)}"><span class="badge">${CATS[k].label}</span><div class="stop-main">${nameLink(s)}<span class="meta">${metaLine(s)}</span><span class="links">${linkRow(s)}</span></div><div class="row" style="gap:0"><button class="x" data-editlinks="${esc(s.id)}">Links</button><button class="x" data-del="${esc(s.id)}" aria-label="Delete ${esc(s.name)}">Delete</button></div>${editing === s.id ? `<form class="link-edit" data-savelinks="${esc(s.id)}"><input id="e-web" type="url" placeholder="Website (https://…)" value="${esc(s.website||"")}"><input id="e-res" type="url" placeholder="Reservation link (Resy, OpenTable…)" value="${esc(s.reserve||"")}"><div class="row"><button class="btn primary small" type="submit">Save links</button><button class="btn ghost small" type="button" data-editlinks="">Cancel</button></div></form>` : ""}</div>`)).join("");
+      `<div class="item" style="--c:${color(k)}"><span class="badge">${CATS[k].label}</span><div class="stop-main">${nameLink(s)}${soonTag(s)}<span class="meta">${metaLine(s)}</span><span class="links">${linkRow(s)}</span></div><div class="row" style="gap:0"><button class="x" data-editlinks="${esc(s.id)}">Links</button><button class="x" data-del="${esc(s.id)}" aria-label="Delete ${esc(s.name)}">Delete</button></div>${editing === s.id ? `<form class="link-edit" data-savelinks="${esc(s.id)}"><input id="e-web" type="url" placeholder="Website (https://…)" value="${esc(s.website||"")}"><input id="e-res" type="url" placeholder="Reservation link (Resy, OpenTable…)" value="${esc(s.reserve||"")}"><div class="row"><button class="btn primary small" type="submit">Save links</button><button class="btn ghost small" type="button" data-editlinks="">Cancel</button></div></form>` : ""}</div>`)).join("");
 }
 
 function renderSaved(){
@@ -718,7 +752,7 @@ function renderSaved(){
 
 /* Re-rendering replaces buttons and rows, so remember where the viewer was and put it back:
    page scroll, each row's sideways scroll, and which control had focus. */
-const FOCUS_KEYS = ["evpick","evfeat","slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
+const FOCUS_KEYS = ["evpick","evfeat","evup","slot","id","lock","clear","mood","cuisine","outing","qpick","editlinks","del","load","delnight"];
 function focusKey(el){
   if (!el || el === document.body || !document.contains(el)) return null;
   if (el.id) return "#" + CSS.escape(el.id);
@@ -752,12 +786,45 @@ function render(){
     }
     document.body.classList.toggle("events-mode", eventsOn);
     $("#signup").hidden = tab === "spots";
+    $("#feedback-home").hidden = tab === "spots";
     $("#view-events").hidden = !eventsOn;
     renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
     if (eventsOn) renderEvents();
   });
   remember();
 }
+
+/* ---------- feedback & suggestions: each option opens an email (no backend) ---------- */
+const FEEDBACK_TO = "magiccitynightsbhm@gmail.com";
+const FEEDBACK = [
+  {title:"Suggest a Spot", hint:"Know a place we should add?", subject:"Spot Suggestion – Magic City Nights",
+    lines:["Spot name:", "Area or address:", "Type (food, lounge, activity, dessert, brunch, coffee):", "Why it's a good spot:"]},
+  {title:"Report a Problem", hint:"Something not working right?", subject:"Problem Report – Magic City Nights",
+    lines:["What happened:", "What page or spot:", "Phone or computer:"]},
+  {title:"Spot Is Closed or Info Is Wrong", hint:"Closed, moved, wrong address or hours", subject:"Spot Update – Magic City Nights",
+    lines:["Spot name:", "What's wrong (closed, wrong address, wrong hours, etc.):"]},
+  {title:"Ideas & Feedback", hint:"Tell us what you'd like to see", subject:"Feedback – Magic City Nights",
+    lines:["What do you like?", "What would make it better?", "Any features you want to see?"]},
+];
+const feedbackHref = f => `mailto:${FEEDBACK_TO}?subject=${encodeURIComponent(f.subject)}&body=${encodeURIComponent(f.lines.join("\n\n\n") + "\n")}`;
+function setupFeedback(){
+  document.querySelectorAll("[data-feedback]").forEach((box, i) => {
+    const id = "fb-menu-" + i;
+    box.innerHTML = `<p>Help us make Magic City Nights better.</p>
+      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &amp; Suggestions</button>
+      <div class="fb-menu" id="${id}" hidden>${FEEDBACK.map(f =>
+        `<a href="${esc(feedbackHref(f))}"><b>${esc(f.title)}</b><span>${esc(f.hint)}</span></a>`).join("")}</div>`;
+    const btn = box.querySelector(".fb-btn"), menu = box.querySelector(".fb-menu");
+    btn.addEventListener("click", e => { e.stopPropagation(); const open = menu.hidden; closeFeedback(); menu.hidden = !open; btn.setAttribute("aria-expanded", open); });
+    menu.addEventListener("click", e => { if (e.target.closest("a")) setTimeout(closeFeedback, 0); e.stopPropagation(); });
+  });
+  document.addEventListener("click", closeFeedback);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { const open = document.querySelector(".fb-menu:not([hidden])"); if (open) { closeFeedback(); open.parentElement.querySelector(".fb-btn").focus(); } } });
+}
+function closeFeedback(){
+  document.querySelectorAll(".fb-menu").forEach(m => { m.hidden = true; m.parentElement.querySelector(".fb-btn").setAttribute("aria-expanded", "false"); });
+}
+setupFeedback();
 
 /* ---------- actions ---------- */
 function roll(){
@@ -770,7 +837,7 @@ function roll(){
   for (const slot of O().slots) {
     if (!fresh.has(slot.id)) continue;
     const taken = takenElsewhere(slot.id);
-    const pool = usable.filter(s => slot.cats.includes(s.category) && !taken.has(s.id));
+    const pool = usable.filter(s => inCats(s, slot.cats) && !s.soon && !taken.has(s.id));
     if (!pool.length) continue;
     const others = pool.filter(s => s.id !== prev[slot.id]);
     const from = others.length ? others : pool;
@@ -796,7 +863,8 @@ let detailId = null;
 const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’`]/g, "");
 function haystack(s){
   const c = CATS[s.category] || {};
-  return norm([s.name, s.area, c.label, c.plural, cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -808,7 +876,7 @@ function searchSpots(query){
     .slice(0, 40).map(x => x.s);
 }
 function resultLine(s){
-  return [CATS[s.category] ? CATS[s.category].label : "", s.area, money(s.price)].filter(Boolean).map(esc).join(" · ");
+  return [CATS[s.category] ? CATS[s.category].label : "", ...(Array.isArray(s.also) ? s.also.map(k => CATS[k] ? CATS[k].label : "") : []), s.area, money(s.price)].filter(Boolean).map(esc).join(" · ");
 }
 function showResults(open){
   const box = $("#q-results");
@@ -822,7 +890,7 @@ function renderResults(){
   if (!q.trim()) { showResults(false); return; }
   const list = searchSpots(q);
   $("#q-results").innerHTML = list.length
-    ? list.map(s => `<button type="button" class="q-item" role="option" data-qpick="${esc(s.id)}"><b>${esc(s.name)}</b><span> · ${resultLine(s)}</span></button>`).join("")
+    ? list.map(s => `<button type="button" class="q-item" role="option" data-qpick="${esc(s.id)}"><b>${esc(s.name)}</b><span> · ${resultLine(s)}</span>${soonTag(s)}</button>`).join("")
     : `<p class="q-empty">No spots found. Try another name or area.</p>`;
   $("#q-results").scrollTop = 0;
   showResults(true);
@@ -836,7 +904,7 @@ function fitResults(){
   box.style.maxHeight = Math.max(140, Math.min(360, visibleBottom - top - 12)) + "px";
 }
 function fitSlot(s){
-  const slots = O().slots.filter(sl => sl.cats.includes(s.category));
+  const slots = O().slots.filter(sl => inCats(s, sl.cats));
   if (!slots.length) return {none:true};
   const have = slots.find(sl => P()[sl.id] === s.id) || O().slots.find(sl => P()[sl.id] === s.id);
   if (have) return {already:have};
@@ -850,6 +918,7 @@ function openSpotDetail(id){
   cat.textContent = CATS[s.category] ? CATS[s.category].label : "Spot";
   cat.style.setProperty("--c", color(s.category));
   $("#sd-name").textContent = s.name;
+  $("#sd-soon").hidden = !s.soon;
   $("#sd-meta").innerHTML = metaLine(s) + (s.address ? ` · ${esc(s.address)}` : "");
   $("#sd-note").hidden = !s.note; $("#sd-note").textContent = s.note || "";
   const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
@@ -935,8 +1004,9 @@ const FEATURED_EVENTS = [
 const featuredLive = (now = new Date()) => FEATURED_EVENTS.filter(e => new Date(e.end || e.start) > now);
 const featuredWhen = e => {
   const s = new Date(e.start), en = e.end ? new Date(e.end) : null;
-  const day = s.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric"});
-  const t = d => d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit"});
+  // Always show Birmingham time, whatever clock the viewer's phone is on.
+  const day = s.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric", timeZone:"America/Chicago"});
+  const t = d => d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit", timeZone:"America/Chicago"});
   return en ? `${day} · ${t(s)}–${t(en)}` : `${day} · ${t(s)}`;
 };
 function renderFeatured(){
@@ -955,6 +1025,44 @@ function renderFeatured(){
         ${safeUrl(dir) ? `<a class="btn ghost" href="${esc(dir)}" target="_blank" rel="noopener">Directions ↗</a>` : ""}
       </div></article>`;
   }).join("");
+}
+/* Coming up: dated events listed under the featured one, soonest first. Each hides itself once it ends;
+   with no end time, it hides after the day is over. Times are Birmingham time (-06:00 in winter). */
+const UPCOMING_EVENTS = [
+  {id:"black-business-market", name:"Black Business Market",
+    start:"2026-11-28T17:00:00-06:00", end:"2026-11-28T20:00:00-06:00"},
+  {id:"ugly-sweater-crawl-2026", name:"Birmingham Ugly Sweater Bar Crawl (9th annual)",
+    start:"2026-12-12T17:00:00-06:00", end:"2026-12-12T23:00:00-06:00",
+    blurb:"Wear your ugliest holiday sweater and hit the bars.",
+    url:"https://www.eventbrite.com/cc/birmingham-bar-crawls-3879893"},
+  {id:"preservation-hall-creole-christmas", name:"Preservation Hall Jazz Band: Creole Christmas",
+    start:"2026-12-20T19:00:00-06:00",
+    venue:"UAB Alys Stephens Center", address:"1200 10th Ave S, Birmingham, AL",
+    blurb:"New Orleans jazz for the holidays.",
+    url:"https://www.alysstephens.org/events/preservation-hall/"},
+];
+// No end time: the event stays up until midnight Birmingham time on its day (start is "YYYY-MM-DDTHH:MM:SS-06:00").
+const eventEnds = e => e.end ? new Date(e.end) : new Date(e.start.slice(0, 10) + "T23:59:59" + e.start.slice(19));
+const upcomingLive = (now = new Date()) => UPCOMING_EVENTS.filter(e => eventEnds(e) > now).sort((a, b) => new Date(a.start) - new Date(b.start));
+function renderUpcoming(){
+  const box = $("#ev-upcoming"); if (!box) return;
+  const list = upcomingLive();
+  box.innerHTML = list.length ? `<h3>Coming up</h3>` + list.map(e => {
+    const dir = e.address ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(`${e.venue || ""}, ${e.address}`) : "";
+    return `<article class="ev-up" data-upcoming="${esc(e.id)}">
+      <span class="when">${esc(featuredWhen(e))}${e.venue ? ` · ${esc(e.venue)}` : ""}</span>
+      <b>${esc(e.name)}</b>
+      ${e.blurb ? `<p>${esc(e.blurb)}</p>` : ""}
+      <div class="ev-links">
+        ${safeUrl(e.url) ? `<a class="btn primary small" href="${esc(e.url)}" target="_blank" rel="noopener">Tickets ↗</a>` : ""}
+        <button type="button" class="btn small" data-evup="${esc(e.id)}">Add to my night</button>
+        ${safeUrl(dir) ? `<a class="btn ghost small" href="${esc(dir)}" target="_blank" rel="noopener">Directions ↗</a>` : ""}
+      </div></article>`;
+  }).join("") : "";
+}
+function pickUpcoming(id){
+  const e = UPCOMING_EVENTS.find(x => x.id === id); if (!e) return;
+  addEventToPlan({n:e.name, w:[featuredWhen(e), e.venue].filter(Boolean).join(" · "), u:safeUrl(e.url)});
 }
 function pickFeatured(id){
   const e = FEATURED_EVENTS.find(x => x.id === id); if (!e) return;
@@ -1003,6 +1111,7 @@ function renderEvents(){
   $("#ev-add-hint").textContent = `It goes in your ${O().name.toLowerCase()} plan, and in the invite.`;
   $("#ev-submit").textContent = `Add to my ${O().name.toLowerCase()} plan`;
   renderFeatured();
+  renderUpcoming();
   const grid = $("#ev-grid");
   if (!grid.children.length) {
     grid.innerHTML = EVENT_SOURCES.map(src => `<article class="ev-card" data-source="${src.id}">
@@ -1101,7 +1210,7 @@ function resetEverything(){
 })();
 
 /* ---------- invite ---------- */
-const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://bigdog90-dot.github.io/Magic-city-nights/";
+const SITE_URL = /^https?:$/.test(location.protocol) && location.hostname.endsWith("github.io") ? location.origin + location.pathname : "https://magiccitynights.com/";
 const EMOJI = {food:"🍽️", activity:"🎟️", dessert:"🍰", lounge:"🍸", bar:"🍹", coffee:"☕", brunch:"🥞"};
 const ACTIVITY_EMOJI = [
   [/comedy|improv|stand.?up/i, "🎭"], [/danc|salsa|ballroom/i, "💃"], [/cook|culinary|chef/i, "👩‍🍳"],
@@ -1277,6 +1386,7 @@ document.addEventListener("click", async e => {
   if (t.id === "ev-back") { closeEvents(); return; }
   if (t.dataset.evpick) { pickLiveEvent(t.dataset.evpick); return; }
   if (t.dataset.evfeat) { pickFeatured(t.dataset.evfeat); return; }
+  if (t.dataset.evup) { pickUpcoming(t.dataset.evup); return; }
   if (t.id === "event-clear") { planEvents[outing] = null; render(); return; }
   if (t.dataset.mood !== undefined) { mood = t.dataset.mood; render(); return; }
   if (t.id === "grown-toggle") { grown = !grown; render(); return; }
@@ -1315,7 +1425,7 @@ document.addEventListener("click", async e => {
     outing = OUTINGS[d.outing] ? d.outing : "date";
     picks[outing] = {};
     for (const s of d.stops||[]) {
-      const slotId = s.slot || (s.category && O().slots.find(sl => sl.cats.includes(s.category))?.id);
+      const slotId = s.slot || (s.category && O().slots.find(sl => inCats(s, sl.cats))?.id);
       if (slotId && spotById(s.id)) picks[outing][slotId] = s.id;
     }
     tab = "build"; render(); window.scrollTo({top:0, behavior:"smooth"}); return;
@@ -1374,6 +1484,17 @@ render();
             const f = fresh.get(sp.id); if (!f) continue;
             for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
+            if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
+            // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
+            const old = STARTER_OLD[sp.id];
+            if (old) for (const k of Object.keys(old)) if (sp[k] === old[k]) { if (f[k]) sp[k] = f[k]; else delete sp[k]; changed = true; }
+          }
+          // Starter spots that have closed for good come off the list.
+          const before = spots.length;
+          spots = spots.filter(x => !STARTER_CLOSED.includes(x.id));
+          if (spots.length !== before) {
+            changed = true;
+            for (const o of Object.keys(picks)) for (const k of Object.keys(picks[o])) if (picks[o][k] && !spotById(picks[o][k])) { picks[o][k] = null; if (locks[o]) locks[o][k] = false; }
           }
           // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
           // because every starter id goes on the "seen" list once it has been offered.
