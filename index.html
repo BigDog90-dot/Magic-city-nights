@@ -543,6 +543,10 @@ const SAMPLES = [
   {category:"lounge",name:"Sample: hookah lounge",price:2,area:"Lakeview",setting:"indoor",dress:"casual",mood:"social"},
 ];
 
+/* Starter spots that closed for good, and the old values of starter spots that were renamed or moved.
+   Browsers that saved the list earlier get these fixes on their next visit. */
+const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house"];
+const STARTER_OLD = {"s-bygones": {"note": "Cocktail bar in the Battery II building. Check hours before you go"}, "s-cassanova": {"name": "Cassanova Bar and Lounge", "address": "2312 1st Ave N", "area": "Downtown", "note": "Hookah, inventive drinks, photo spots. From a 2022 list, so check it's open"}, "s-dzire": {"note": "Hookah lounge. Look it up before you go"}, "s-habitat-feed-social": {"note": "Rooftop at the Grand Bohemian Hotel. Reserve a sunset table"}, "s-high-dive": {"name": "High Dive"}, "s-jasmine-s-soul-food": {"name": "Jasmine's Soul Food"}, "s-k-j-s-elegant-pastries": {"area": "Downtown"}, "s-k1-speed": {"address": "5421 Beacon Dr"}, "s-mo-s-carriages-and-trail-rides": {"area": "McCalla"}, "s-obsidian": {"note": "Upscale cocktail and sushi lounge from Johin'na's owner, connected to Johin'na. Was aiming to open around October 2026, so check it's open"}, "s-premiere-cinema-on-lakeshore": {"name": "Premiere Cinema on Lakeshore"}, "s-sips-n-strokes": {"name": "Sips n Strokes"}, "s-snapper-grabber-land-sea-market-cafe": {"name": "Snapper Grabber Land & Sea Market & Cafe"}, "s-the-alabama-biscuit-co": {"address": "4133 White Oak Dr", "area": "Crestline"}, "s-the-lodge": {"note": "Hidden speakeasy inside Fairway Social at Urban Supply by Railroad Park. Solve a coded message to find the door. Duckpin bowling, live music. Check it's open"}};
 let spots = [], nights = [];
 let outing = "date";
 let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
@@ -1433,6 +1437,17 @@ render();
             const f = fresh.get(sp.id); if (!f) continue;
             for (const k of ["website","reserve","address","area","cuisine"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
+            if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
+            // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
+            const old = STARTER_OLD[sp.id];
+            if (old) for (const k of Object.keys(old)) if (sp[k] === old[k]) { if (f[k]) sp[k] = f[k]; else delete sp[k]; changed = true; }
+          }
+          // Starter spots that have closed for good come off the list.
+          const before = spots.length;
+          spots = spots.filter(x => !STARTER_CLOSED.includes(x.id));
+          if (spots.length !== before) {
+            changed = true;
+            for (const o of Object.keys(picks)) for (const k of Object.keys(picks[o])) if (picks[o][k] && !spotById(picks[o][k])) { picks[o][k] = null; if (locks[o]) locks[o][k] = false; }
           }
           // Add starter spots this phone hasn't seen yet. Spots the person deleted stay deleted,
           // because every starter id goes on the "seen" list once it has been offered.
