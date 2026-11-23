@@ -700,6 +700,9 @@ for (const [id, old] of Object.entries({
   "s-bottega": ["https://www.opentable.com/r/bottega", "https://www.opentable.com/r/bottega?covers=2"],
   "s-amore-ristorante-italiano": ["https://www.opentable.com/r/amore-birmingham-2", "https://www.opentable.com/r/amore-birmingham-2?covers=2"]
 })) (STARTER_OLD[id] = STARTER_OLD[id] || {}).reserve = old;
+// Details that changed later: a phone that saved the old value gets the new one (values the person edited stay).
+Object.assign(STARTER_OLD["s-little-donkey"] = STARTER_OLD["s-little-donkey"] || {}, {note: "Fun Mexican spot. Walk in"});
+Object.assign(STARTER_OLD["s-churro-station"] = STARTER_OLD["s-churro-station"] || {}, {address: "329 Summit Blvd, Birmingham, AL 35243", area: "The Summit", note: "Filled churros", lat: 33.451611, lng: -86.730351});
 let spots = [], nights = [];
 let outing = "date";
 let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
