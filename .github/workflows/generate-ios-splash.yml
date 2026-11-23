@@ -1,0 +1,39 @@
+name: Generate iOS splash images
+on:
+  push:
+    branches: [pwa-ios-splash]
+permissions:
+  contents: write
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          pip install pillow
+          sudo apt-get update
+          sudo apt-get install -y optipng
+      - name: Generate splash PNGs
+        run: python3 scripts/generate-ios-splash.py
+      - name: Commit images and remove this one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add icons/splash scripts/generate-ios-splash.py
+          git rm --ignore-unmatch .github/workflows/generate-ios-splash.yml
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "$(cat <<'EOF'
+Add iOS PWA splash images
+
+Portrait apple-touch-startup-image assets at icons/splash/, generated from logo-simple.webp on a solid #0B1426 background. Removes this one-shot workflow.
+EOF
+)"
+          git push
