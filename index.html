@@ -1634,8 +1634,7 @@ setInterval(() => { if (tonight && !document.hidden) render(); }, 5 * 60 * 1000)
 
 /* ---------- pull down to reset ---------- */
 // Puts the screen back the way it first loads: Date night, Build tab, list view, no filters, search or open panels,
-// rails scrolled to the start, then brings the Date night card into view with a short gold glow.
-// Picked plans and saved spots stay put.
+// rails scrolled to the start. Picked plans and saved spots stay put. landOnDate() runs after the spring settles.
 function resetEverything(){
   const smooth = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   mood = ""; grown = false; cuisines = []; tonight = false;
@@ -1649,18 +1648,23 @@ function resetEverything(){
   render();
   document.querySelectorAll(".rail, .chips, #q-results").forEach(el => { if (el.scrollLeft || el.scrollTop) el.scrollTo({left:0, top:0, behavior:smooth}); });
   toast("Back to the start. Your plan is saved.");
-  // Wait for the spring-back to land, then glide to Date night and pulse it once.
-  setTimeout(() => {
-    const date = $('.outing[data-outing="date"]'); if (!date) return;
-    date.scrollIntoView({block:"start", behavior:smooth});
-    date.classList.remove("ptr-glow"); void date.offsetWidth; date.classList.add("ptr-glow");
-    setTimeout(() => date.classList.remove("ptr-glow"), 1250);
-  }, smooth === "smooth" ? 420 : 0);
+}
+// The end state of a reset: the Date night card at the top of the screen with one soft gold pulse.
+// Called only after the spring-back has finished and layout has settled.
+function landOnDate(){
+  const date = $('.outing[data-outing="date"]'); if (!date) return;
+  const smooth = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  const offset = () => date.getBoundingClientRect().top - (parseFloat(getComputedStyle(date).scrollMarginTop) || 0);
+  date.scrollIntoView({block:"start", behavior:smooth});
+  date.classList.remove("ptr-glow"); void date.offsetWidth; date.classList.add("ptr-glow");
+  setTimeout(() => date.classList.remove("ptr-glow"), 1250);
+  // If anything nudged the page while it scrolled (late layout, a re-render), snap back onto Date night.
+  setTimeout(() => { const off = offset(); if (Math.abs(off) > 4) window.scrollBy(0, off); }, smooth === "smooth" ? 900 : 60);
 }
 (() => {
   const ptr = $("#ptr"), label = ptr.querySelector(".ptr-text"), icon = ptr.querySelector(".ptr-icon"), wrap = $(".wrap");
   const DEAD = 12, TRIGGER = 75, MAX = 120, RESIST = 0.55;   // px: ignore tiny nudges, pull distance to arm, the most the page moves; drag resistance
-  let startX = 0, startY = 0, tracking = false, pulling = false, armed = false, dist = 0, frame = 0, springTimer = 0;
+  let startX = 0, startY = 0, tracking = false, pulling = false, armed = false, dist = 0, frame = 0, springTimer = 0, stopSpring = null;
   const skip = el => el.closest("input, textarea, select, dialog, .rail, .chips, .search-results, #view-events .ev-grid, .map-shell, .leaflet-container");
   // Dampened pull: the page moves about half as far as the finger, and much less once it's armed.
   const damp = d => { const easy = TRIGGER / RESIST; return Math.min(MAX, d <= easy ? d * RESIST : TRIGGER + (d - easy) * 0.2); };
@@ -1679,7 +1683,7 @@ function resetEverything(){
   const release = go => {
     tracking = false; pulling = false;
     if (frame) { cancelAnimationFrame(frame); frame = 0; }
-    clearTimeout(springTimer);
+    if (stopSpring) stopSpring();
     ptr.classList.add("settle"); wrap.classList.add("ptr-spring");
     if (go) { ptr.classList.remove("spin"); void ptr.offsetWidth; ptr.classList.add("spin"); label.textContent = "Resetting"; }
     // Hold the pill a moment on reset so the spin reads, then tuck it away.
@@ -1689,12 +1693,22 @@ function resetEverything(){
       else { ptr.style.transform = "translate(-50%, -90px)"; ptr.style.opacity = "0"; }
     });
     const hide = () => { ptr.style.transform = "translate(-50%, -90px)"; ptr.style.opacity = "0"; ptr.classList.remove("armed"); };
-    if (go) setTimeout(hide, 450);
-    springTimer = setTimeout(() => {
+    const hideTimer = go ? setTimeout(hide, 450) : 0;
+    // Order on reset: clear filters and close panels now, let the bounce finish (transitionend, with a timeout
+    // as a backstop), drop the transforms, wait two frames for layout to settle, then land on Date night.
+    const cleanup = () => {
+      clearTimeout(springTimer); wrap.removeEventListener("transitionend", onEnd); stopSpring = null;
       wrap.classList.remove("ptr-spring", "ptr-pull"); wrap.style.transform = "";
+    };
+    const finish = () => {
+      cleanup();
       ptr.classList.remove("settle", "spin", "armed"); icon.style.transform = "";
-      if (go) hide();
-    }, go ? 900 : 520);
+      if (go) { clearTimeout(hideTimer); hide(); requestAnimationFrame(() => requestAnimationFrame(landOnDate)); }
+    };
+    const onEnd = e => { if (e.target === wrap && e.propertyName === "transform") finish(); };
+    wrap.addEventListener("transitionend", onEnd);
+    springTimer = setTimeout(finish, 800);
+    stopSpring = () => { clearTimeout(hideTimer); cleanup(); };
     armed = false; dist = 0;
     if (go) resetEverything();
   };
@@ -1711,7 +1725,7 @@ function resetEverything(){
     if (!pulling && (window.scrollY > 0 || dy < -DEAD || (dx > DEAD && dx > dy))) { tracking = false; return; }
     if (dy <= DEAD) { if (pulling) { dist = 0; armed = false; schedule(); } return; }
     if (!pulling) {
-      pulling = true; clearTimeout(springTimer);
+      pulling = true; if (stopSpring) stopSpring();
       ptr.classList.remove("settle", "spin"); wrap.classList.remove("ptr-spring"); wrap.classList.add("ptr-pull");
     }
     dist = damp(dy - DEAD);
