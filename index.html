@@ -328,6 +328,24 @@ button,a,select,label{touch-action:manipulation;-webkit-tap-highlight-color:tran
 .x{min-height:40px}
 .lock{min-height:38px}
 .links a{display:inline-block;padding-block:4px}
+/* Time pickers (event "Starts at", invite "Be ready by"): native picker styled navy and gold,
+   with a "Pick a time" placeholder instead of the browser's raw "--:-- --". */
+.tf{position:relative;display:block}
+.tf input[type=time]{display:block;width:100%;min-height:46px;color-scheme:dark;accent-color:var(--accent);text-align:left;cursor:pointer;line-height:1.3}
+.tf input[type=time]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgb(212 175 55 / .22)}
+.tf input[type=time]::-webkit-date-and-time-value{text-align:left}
+.tf input[type=time]::-webkit-datetime-edit{color:var(--fg)}
+.tf input[type=time]::-webkit-datetime-edit-fields-wrapper{padding:0}
+.tf input[type=time]::-webkit-calendar-picker-indicator{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/20px no-repeat;width:22px;height:22px;padding:0;margin-left:6px;opacity:1;cursor:pointer;filter:none}
+.tf::after{content:attr(data-ph);position:absolute;left:11px;right:44px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tf[data-empty]::after{display:block}
+.tf[data-empty]:focus-within::after{display:none}
+.tf[data-empty] input[type=time]:not(:focus){color:transparent;-webkit-text-fill-color:transparent}
+.tf[data-empty] input[type=time]:not(:focus)::-webkit-datetime-edit{color:transparent;-webkit-text-fill-color:transparent}
+.tf[data-empty] input[type=time]:not(:focus)::-webkit-datetime-edit-hour-field{color:transparent;-webkit-text-fill-color:transparent}
+.tf[data-empty] input[type=time]:not(:focus)::-webkit-datetime-edit-minute-field{color:transparent;-webkit-text-fill-color:transparent}
+.tf[data-empty] input[type=time]:not(:focus)::-webkit-datetime-edit-ampm-field{color:transparent;-webkit-text-fill-color:transparent}
+.tf[data-empty] input[type=time]:not(:focus)::-webkit-datetime-edit-text{color:transparent;-webkit-text-fill-color:transparent}
 @media (max-width:520px){
   /* Extra top space keeps the logo below the soft blur Safari puts under the iPhone status bar */
   .wrap{padding-block:38px 40px;gap:16px}
@@ -445,7 +463,7 @@ body.map-open{overflow:hidden}
       <p class="hint" id="ev-add-hint"></p>
       <form id="ev-form" class="form-grid">
         <div class="field full"><label for="ev-name">Event</label><input id="ev-name" required placeholder="Candlelight: Queen vs. ABBA"></div>
-        <div class="field"><label for="ev-time">Starts at (optional)</label><input id="ev-time" type="time"></div>
+        <div class="field"><label for="ev-time">Starts at (optional)</label><span class="tf" data-ph="Pick a time" data-empty><input id="ev-time" type="time"></span></div>
         <div class="field"><label for="ev-link">Ticket link (optional)</label><input id="ev-link" type="url" placeholder="https://…"></div>
         <div class="full row"><button class="btn primary" type="submit" id="ev-submit">Add to my plan</button></div>
       </form>
@@ -457,7 +475,7 @@ body.map-open{overflow:hidden}
     <button data-mood="social" aria-pressed="false">🎉 Social</button>
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
-    <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown &amp; sexy <span class="onoff" aria-hidden="true">OFF</span></button>
+    <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown & sexy <span class="onoff" aria-hidden="true">OFF</span></button>
     <button class="tn" id="tonight-toggle" aria-pressed="false" aria-controls="tonight">🌙 Open tonight <span class="onoff" aria-hidden="true">OFF</span></button>
     <span class="grown-hint" id="grown-hint">On/off. Works with any mood.</span>
   </section>
@@ -553,7 +571,7 @@ body.map-open{overflow:hidden}
           <select id="a-mood"><option value="social">Social</option><option value="lowkey">Low key</option><option value="both" selected>Either one</option></select></div>
         <div class="field"><label for="a-dress">Dress code</label>
           <select id="a-dress"><option value="casual">Casual</option><option value="dressy">Dressed up</option><option value="both" selected>Either one</option></select></div>
-        <label class="check full" for="a-grown"><input type="checkbox" id="a-grown"> Grown &amp; sexy spot</label>
+        <label class="check full" for="a-grown"><input type="checkbox" id="a-grown"> Grown & sexy spot</label>
         <div class="field full"><label for="a-address">Address (optional)</label><input id="a-address" placeholder="Street address"></div>
         <div class="field full"><label for="a-web">Website (optional)</label><input id="a-web" type="url" placeholder="https://…"></div>
         <div class="field full"><label for="a-res">Reservation link (optional)</label><input id="a-res" type="url" placeholder="Resy, OpenTable or their booking page"></div>
@@ -599,7 +617,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
     <div class="field"><label for="inv-note">Personal note (optional)</label>
       <textarea id="inv-note" rows="2" placeholder="Wear something nice. Can't wait to see you."></textarea></div>
     <div class="two">
-      <div class="field"><label for="inv-time">Be ready by (optional)</label><input id="inv-time" type="time"></div>
+      <div class="field"><label for="inv-time">Be ready by (optional)</label><span class="tf" data-ph="Pick a time" data-empty><input id="inv-time" type="time"></span></div>
       <div class="field"><label for="inv-dress">Dress code (optional)</label>
         <select id="inv-dress"><option value="">None</option><option value="casual">Casual</option><option value="dressy">Dressed up</option></select></div>
     </div>
@@ -691,7 +709,7 @@ const newId = () => "local-" + Math.random().toString(36).slice(2);
 function saveLocal(){ if (!local) return; try { localStorage.setItem(LOCAL_KEY, JSON.stringify({spots, nights})); } catch(e) {} }
 
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c]));
 const money = n => Number(n) ? "$".repeat(Math.max(1, Math.min(4, Number(n)))) : "";
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
@@ -928,7 +946,7 @@ function setupFeedback(){
     const id = "fb-menu-" + i;
     box.innerHTML = `<p>Help us make Magic City Nights better.</p>
       <div class="fb-row"><a class="fb-btn fb-suggest" href="${esc(feedbackHref(FEEDBACK[0]))}">💡 Suggest a spot</a>
-      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &amp; Suggestions</button></div>
+      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback & Suggestions</button></div>
       <div class="fb-menu" id="${id}" hidden>${FEEDBACK.map(f =>
         `<a href="${esc(feedbackHref(f))}"><b>${esc(f.title)}</b><span>${esc(f.hint)}</span></a>`).join("")}</div>`;
     const btn = box.querySelector("button.fb-btn"), menu = box.querySelector(".fb-menu");
@@ -1470,7 +1488,7 @@ function popupHtml(s){
   return `<b>${esc(s.name)}</b>${soonTag(s)}<span class="meta">${[CATS[s.category] ? CATS[s.category].label : "", s.area ? esc(s.area) : "", money(s.price)].filter(Boolean).join(" · ")}</span>
     ${line ? `<span class="open">${esc(line)}</span>` : ""}
     <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span>
-    <button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details &amp; add</button>`;
+    <button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details & add</button>`;
 }
 function renderMapView(){
   const onBuild = tab === "build" && !eventsOn;
@@ -2055,6 +2073,19 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
       if (a) dateReady(a);
     }, true);
   });
+})();
+</script>
+<script>
+/* Time pickers: keep the "Pick a time" placeholder in sync with the field's value. */
+(function(){
+  function sync(i){ var w = i.parentNode; if (w && w.classList && w.classList.contains("tf")) { if (i.value) w.removeAttribute("data-empty"); else w.setAttribute("data-empty", ""); } }
+  function all(){ var l = document.querySelectorAll(".tf input"); for (var k = 0; k < l.length; k++) sync(l[k]); }
+  function isTf(t){ return t && t.matches && t.matches(".tf input"); }
+  ["input", "change", "blur"].forEach(function(type){ document.addEventListener(type, function(e){ if (isTf(e.target)) sync(e.target); }, true); });
+  document.addEventListener("submit", function(){ setTimeout(all, 0); }, true);
+  // Desktop: clicking anywhere in the field opens the picker, not just the clock icon.
+  document.addEventListener("click", function(e){ var i = e.target; if (isTf(i) && i.showPicker && window.matchMedia && matchMedia("(pointer:fine)").matches) { try { i.showPicker(); } catch (_) {} } });
+  all();
 })();
 </script>
 </body></html>
