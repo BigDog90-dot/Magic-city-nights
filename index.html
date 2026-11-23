@@ -209,6 +209,17 @@ body.events-mode .wrap > :is(.mood,.search,.cuisines,.filters,.tabs,#view-build,
 /* Email signup (Kit form). Kit injects its own styles, so these override them to match the site. */
 .signup{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:linear-gradient(165deg,var(--sel),var(--surface) 65%);gap:6px}
 .signup:not(.ready){display:none}
+.feedback{display:grid;justify-items:center;gap:10px;text-align:center;padding:8px 0 4px;position:relative}
+.feedback p{margin:0;color:var(--muted);font-size:.9rem}
+.fb-btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--serif);font-weight:700;font-size:1.02rem;cursor:pointer}
+.fb-btn:hover,.fb-btn[aria-expanded="true"]{background:var(--sel)}
+.fb-btn:focus-visible,.fb-menu a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fb-menu{width:min(100%,360px);display:grid;gap:4px;padding:8px;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:18px;text-align:left}
+.fb-menu[hidden]{display:none}
+.fb-menu a{display:grid;gap:2px;padding:12px 14px;border-radius:12px;color:var(--fg);text-decoration:none;min-height:44px}
+.fb-menu a:hover{background:var(--sel)}
+.fb-menu a b{font-weight:700;font-size:.98rem}
+.fb-menu a span{color:var(--muted);font-size:.82rem}
 .signup .eyebrow{color:var(--accent)}
 #signup .formkit-form{background:transparent !important;border:0 !important;box-shadow:none !important;max-width:none !important;width:100% !important;margin:0 !important;font-family:var(--body) !important;color:var(--fg) !important}
 #signup .formkit-form [data-style],#signup .formkit-form [data-element="column"],#signup .formkit-form .formkit-column{padding:0 !important;background:transparent !important}
@@ -413,6 +424,8 @@ body.shared #headline, body.shared #subline{display:none}
     <script async data-uid="1e025ae7f2" src="https://magic-7.kit.com/1e025ae7f2/index.js"></script>
   </section>
 
+  <section class="feedback" id="feedback-home" data-feedback aria-label="Feedback and suggestions"></section>
+
   <section id="view-spots" hidden style="display:grid;gap:18px">
     <div class="card">
       <h2>Add a spot</h2>
@@ -458,6 +471,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
     <div class="card">
       <div class="row"><h2>Your spots</h2><span class="hint" id="spot-count"></span></div>
       <div id="spot-list" class="list"></div>
+      <section class="feedback" data-feedback aria-label="Feedback and suggestions"></section>
     </div>
 
     <div class="card">
@@ -772,12 +786,45 @@ function render(){
     }
     document.body.classList.toggle("events-mode", eventsOn);
     $("#signup").hidden = tab === "spots";
+    $("#feedback-home").hidden = tab === "spots";
     $("#view-events").hidden = !eventsOn;
     renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
     if (eventsOn) renderEvents();
   });
   remember();
 }
+
+/* ---------- feedback & suggestions: each option opens an email (no backend) ---------- */
+const FEEDBACK_TO = "magiccitynightsbhm@gmail.com";
+const FEEDBACK = [
+  {title:"Suggest a Spot", hint:"Know a place we should add?", subject:"Spot Suggestion – Magic City Nights",
+    lines:["Spot name:", "Area or address:", "Type (food, lounge, activity, dessert, brunch, coffee):", "Why it's a good spot:"]},
+  {title:"Report a Problem", hint:"Something not working right?", subject:"Problem Report – Magic City Nights",
+    lines:["What happened:", "What page or spot:", "Phone or computer:"]},
+  {title:"Spot Is Closed or Info Is Wrong", hint:"Closed, moved, wrong address or hours", subject:"Spot Update – Magic City Nights",
+    lines:["Spot name:", "What's wrong (closed, wrong address, wrong hours, etc.):"]},
+  {title:"Ideas & Feedback", hint:"Tell us what you'd like to see", subject:"Feedback – Magic City Nights",
+    lines:["What do you like?", "What would make it better?", "Any features you want to see?"]},
+];
+const feedbackHref = f => `mailto:${FEEDBACK_TO}?subject=${encodeURIComponent(f.subject)}&body=${encodeURIComponent(f.lines.join("\n\n\n") + "\n")}`;
+function setupFeedback(){
+  document.querySelectorAll("[data-feedback]").forEach((box, i) => {
+    const id = "fb-menu-" + i;
+    box.innerHTML = `<p>Help us make Magic City Nights better.</p>
+      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &amp; Suggestions</button>
+      <div class="fb-menu" id="${id}" hidden>${FEEDBACK.map(f =>
+        `<a href="${esc(feedbackHref(f))}"><b>${esc(f.title)}</b><span>${esc(f.hint)}</span></a>`).join("")}</div>`;
+    const btn = box.querySelector(".fb-btn"), menu = box.querySelector(".fb-menu");
+    btn.addEventListener("click", e => { e.stopPropagation(); const open = menu.hidden; closeFeedback(); menu.hidden = !open; btn.setAttribute("aria-expanded", open); });
+    menu.addEventListener("click", e => { if (e.target.closest("a")) setTimeout(closeFeedback, 0); e.stopPropagation(); });
+  });
+  document.addEventListener("click", closeFeedback);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { const open = document.querySelector(".fb-menu:not([hidden])"); if (open) { closeFeedback(); open.parentElement.querySelector(".fb-btn").focus(); } } });
+}
+function closeFeedback(){
+  document.querySelectorAll(".fb-menu").forEach(m => { m.hidden = true; m.parentElement.querySelector(".fb-btn").setAttribute("aria-expanded", "false"); });
+}
+setupFeedback();
 
 /* ---------- actions ---------- */
 function roll(){
