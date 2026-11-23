@@ -1687,4 +1687,31 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
   window.addEventListener("appinstalled", function () { deferred = null; hide(); });
 })();
 </script>
+<script>
+/* Booking links: any Resy or OpenTable link opens on a date a week from today (viewer's local time) for a party of 2.
+   The date is filled in when the link is tapped, so it never goes stale. Covers spot cards, plans and user-added links. */
+(function () {
+  var pad = function (n) { return String(n).padStart(2, "0"); };
+  function dateReady(a) {
+    var u; try { u = new URL(a.href); } catch (err) { return; }
+    var h = u.hostname.replace(/^www\./, "");
+    var d = new Date(); d.setDate(d.getDate() + 7);
+    var ymd = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    if ((h === "resy.com" || h.slice(-9) === ".resy.com") && u.pathname.indexOf("/venues/") !== -1) {
+      u.searchParams.set("date", ymd);
+      if (!u.searchParams.has("seats")) u.searchParams.set("seats", "2");
+    } else if ((h === "opentable.com" || h.slice(-14) === ".opentable.com") && u.pathname.length > 1) {
+      u.searchParams.set("dateTime", ymd + "T19:00");
+      if (!u.searchParams.has("covers")) u.searchParams.set("covers", "2");
+    } else return;
+    a.href = u.toString();
+  }
+  ["click", "auxclick", "contextmenu"].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+      if (a) dateReady(a);
+    }, true);
+  });
+})();
+</script>
 </body></html>
