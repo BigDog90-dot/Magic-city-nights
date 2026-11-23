@@ -475,7 +475,7 @@ body.map-open{overflow:hidden}
     <button data-mood="social" aria-pressed="false">🎉 Social</button>
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
-    <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown & sexy <span class="onoff" aria-hidden="true">OFF</span></button>
+    <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown &#38; sexy <span class="onoff" aria-hidden="true">OFF</span></button>
     <button class="tn" id="tonight-toggle" aria-pressed="false" aria-controls="tonight">🌙 Open tonight <span class="onoff" aria-hidden="true">OFF</span></button>
     <span class="grown-hint" id="grown-hint">On/off. Works with any mood.</span>
   </section>
@@ -571,7 +571,7 @@ body.map-open{overflow:hidden}
           <select id="a-mood"><option value="social">Social</option><option value="lowkey">Low key</option><option value="both" selected>Either one</option></select></div>
         <div class="field"><label for="a-dress">Dress code</label>
           <select id="a-dress"><option value="casual">Casual</option><option value="dressy">Dressed up</option><option value="both" selected>Either one</option></select></div>
-        <label class="check full" for="a-grown"><input type="checkbox" id="a-grown"> Grown & sexy spot</label>
+        <label class="check full" for="a-grown"><input type="checkbox" id="a-grown"> Grown &#38; sexy spot</label>
         <div class="field full"><label for="a-address">Address (optional)</label><input id="a-address" placeholder="Street address"></div>
         <div class="field full"><label for="a-web">Website (optional)</label><input id="a-web" type="url" placeholder="https://…"></div>
         <div class="field full"><label for="a-res">Reservation link (optional)</label><input id="a-res" type="url" placeholder="Resy, OpenTable or their booking page"></div>
@@ -709,7 +709,7 @@ const newId = () => "local-" + Math.random().toString(36).slice(2);
 function saveLocal(){ if (!local) return; try { localStorage.setItem(LOCAL_KEY, JSON.stringify({spots, nights})); } catch(e) {} }
 
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&#38;","<":"&#60;",">":"&#62;",'"':"&#34;","'":"&#39;"}[c]));
 const money = n => Number(n) ? "$".repeat(Math.max(1, Math.min(4, Number(n)))) : "";
 const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual" : "";
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
@@ -946,7 +946,7 @@ function setupFeedback(){
     const id = "fb-menu-" + i;
     box.innerHTML = `<p>Help us make Magic City Nights better.</p>
       <div class="fb-row"><a class="fb-btn fb-suggest" href="${esc(feedbackHref(FEEDBACK[0]))}">💡 Suggest a spot</a>
-      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback & Suggestions</button></div>
+      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &#38; Suggestions</button></div>
       <div class="fb-menu" id="${id}" hidden>${FEEDBACK.map(f =>
         `<a href="${esc(feedbackHref(f))}"><b>${esc(f.title)}</b><span>${esc(f.hint)}</span></a>`).join("")}</div>`;
     const btn = box.querySelector("button.fb-btn"), menu = box.querySelector(".fb-menu");
@@ -1488,7 +1488,7 @@ function popupHtml(s){
   return `<b>${esc(s.name)}</b>${soonTag(s)}<span class="meta">${[CATS[s.category] ? CATS[s.category].label : "", s.area ? esc(s.area) : "", money(s.price)].filter(Boolean).join(" · ")}</span>
     ${line ? `<span class="open">${esc(line)}</span>` : ""}
     <span class="links"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}</span>
-    <button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details & add</button>`;
+    <button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details &#38; add</button>`;
 }
 function renderMapView(){
   const onBuild = tab === "build" && !eventsOn;
