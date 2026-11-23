@@ -709,6 +709,7 @@ for (const [id, old] of Object.entries({
 Object.assign(STARTER_OLD["s-little-donkey"] = STARTER_OLD["s-little-donkey"] || {}, {note: "Fun Mexican spot. Walk in"});
 Object.assign(STARTER_OLD["s-churro-station"] = STARTER_OLD["s-churro-station"] || {}, {address: "329 Summit Blvd, Birmingham, AL 35243", area: "The Summit", note: "Filled churros", lat: 33.451611, lng: -86.730351});
 Object.assign(STARTER_OLD["s-etcetera-social"] = STARTER_OLD["s-etcetera-social"] || {}, {area: "Downtown"});
+Object.assign(STARTER_OLD["s-bar-sebastian"] = STARTER_OLD["s-bar-sebastian"] || {}, {name: "Bar Sebastian", address: ["120 16th St S", "120 16th St S, Birmingham, AL"], area: "Southside", note: ["Hidden rooftop bar, you need the password. From a 2022 list, so check it's open", "Hidden rooftop bar, you need the password"], lat: 33.508371, lng: -86.809533, category: "bar", setting: "outdoor", price: 3, dress: "both", mood: "lowkey"});
 let spots = [], nights = [];
 let outing = "date";
 let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
@@ -1386,6 +1387,7 @@ const NIGHT_HOURS = {
   // Hours checked Nov 23, 2026 on each spot's own site or its current listings.
   "s-alicias-coffee": "Mo-Sa 07:00-16:00",
   "s-bandit-patisserie": "Mo-Su 07:30-14:00",
+  "s-bar-sebastian": "Tu-Th 17:00-20:30; Fr-Sa 17:00-21:00; Su 12:00-15:00",
   "s-big-spoon-creamery": "Su-Th 12:00-21:00; Fr-Sa 12:00-22:00",
   "s-burning-tree-bbq": "Mo-Sa 10:30-20:00",
   "s-cafe-dupont": "Tu-Sa eve",
