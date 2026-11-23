@@ -1218,8 +1218,8 @@ function renderFeatured(){
 const UPCOMING_EVENTS = [
   {id:"black-business-market", name:"The Modern Greenbook Marketplace",
     start:"2026-11-28T17:00:00-06:00", end:"2026-11-28T20:00:00-06:00",
-    venue:"City Walk BHAM", address:"875 24th St N, Birmingham, AL 35203",
-    blurb:"A monthly pop-up from The Modern Green Book celebrating Black-owned businesses, inspired by the historic Negro Motorist Green Book. About 30–40 local vendors, food trucks, DJs, and live music fill the Yellow Block at City Walk BHAM. Admission is free; park at The Barkery Parking Lot. This Nov 28 market is the Season 2 holiday finale, with Santa photos.",
+    venue:"City Walk Social, City Walk BHAM", address:"875 24th St N, Birmingham, AL 35203",
+    blurb:"A monthly pop-up from The Modern Green Book celebrating Black-owned businesses, inspired by the historic Negro Motorist Green Book. Run by founder Theo Edwards-Butler, whose Modern Green Book directory lists more than 2,300 Black-owned businesses. About 30–40 local vendors, food trucks, DJs, and live music fill the City Walk Social area (the Yellow Block) at City Walk BHAM on the last Saturday of each month, April through November. Admission is free; park at The Barkery Parking Lot. This Nov 28 market is the Season 2 holiday finale, with Santa photos.",
     url:"https://citywalkbham.com/event/the-modern-green-book-marketplace-2-2-2-2-2/2026-11-28/", cta:"Details"},
   {id:"ugly-sweater-crawl-2026", name:"Birmingham Ugly Sweater Bar Crawl (9th annual)",
     start:"2026-12-12T17:00:00-06:00", end:"2026-12-12T23:00:00-06:00",
@@ -1635,7 +1635,7 @@ function drawMap(L, pinned){
     // OpenStreetMap's standard tiles, darkened to navy with CSS (.map .leaflet-tile-pane). No API key needed.
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom:19, className:"mcn-tiles",
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+      attribution:'&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
     }).addTo(mapObj);
     mapLayer = L.layerGroup().addTo(mapObj);
   }
