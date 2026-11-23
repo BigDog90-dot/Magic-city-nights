@@ -1,14 +1,39 @@
 {
+  "id": "/",
   "name": "Magic City Nights",
   "short_name": "MC Nights",
-  "description": "Plan a Birmingham date or night out.",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Plan a Birmingham date night or night out. Pick restaurants, lounges, bars, dessert and things to do around the Magic City.",
+  "lang": "en-US",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0B1426",
   "theme_color": "#0B1426",
+  "categories": [
+    "lifestyle",
+    "food",
+    "entertainment",
+    "travel"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

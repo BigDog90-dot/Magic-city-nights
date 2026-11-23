@@ -1643,4 +1643,48 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
 </script>
 
 <script data-goatcounter="https://mcn.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<!-- PWA: service worker registration + install button (kept separate from app logic) -->
+<script>
+(function () {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("/sw.js").catch(function () {});
+    });
+  }
+  var KEY = "mcn-install-dismissed";
+  var deferred = null, wrap = null;
+  function hide() { if (wrap) { wrap.remove(); wrap = null; } }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferred = e;
+    try { if (localStorage.getItem(KEY)) return; } catch (err) {}
+    if (wrap || !document.body) return;
+    wrap = document.createElement("div");
+    wrap.setAttribute("role", "region");
+    wrap.setAttribute("aria-label", "Install app");
+    wrap.style.cssText = "position:fixed;right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:center;gap:2px;background:#16213A;border:1px solid #2A3654;border-radius:999px;padding:4px;box-shadow:0 8px 22px rgb(0 0 0 / .4);font:inherit";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "Install app";
+    btn.style.cssText = "background:#D4AF37;color:#0B1426;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;font-size:.85rem;cursor:pointer";
+    var x = document.createElement("button");
+    x.type = "button";
+    x.setAttribute("aria-label", "Dismiss");
+    x.textContent = "\u00d7";
+    x.style.cssText = "background:none;color:#A9B0C2;border:0;padding:4px 10px;font-size:1.1rem;line-height:1;cursor:pointer";
+    btn.addEventListener("click", function () {
+      if (!deferred) return hide();
+      deferred.prompt();
+      deferred.userChoice.finally(function () { deferred = null; hide(); });
+    });
+    x.addEventListener("click", function () {
+      try { localStorage.setItem(KEY, "1"); } catch (err) {}
+      hide();
+    });
+    wrap.appendChild(btn); wrap.appendChild(x);
+    document.body.appendChild(wrap);
+  });
+  window.addEventListener("appinstalled", function () { deferred = null; hide(); });
+})();
+</script>
 </body></html>
