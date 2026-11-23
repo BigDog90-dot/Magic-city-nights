@@ -30,10 +30,5 @@ jobs:
             echo "Nothing to commit"
             exit 0
           fi
-          git commit -m "$(cat <<'EOF'
-Add iOS PWA splash images
-
-Portrait apple-touch-startup-image assets at icons/splash/, generated from logo-simple.webp on a solid #0B1426 background. Removes this one-shot workflow.
-EOF
-)"
+          git commit -m "Add iOS PWA splash images (portrait, logo-simple on #0B1426). Remove this one-shot workflow."
           git push
