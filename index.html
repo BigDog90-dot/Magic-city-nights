@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Magic City Nights</title>
+<title>Magic City Nights | Birmingham Date Planner</title>
 <meta name='impact-site-verification' value='c2ec4ce5-5881-49ae-aca3-ebd6d39daf71'>
-<meta name="description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta name="description" content="Plan a Birmingham date night or night out. Pick restaurants, lounges, bars, dessert and things to do around the Magic City, or roll a surprise plan and send the invite.">
 <meta name="theme-color" content="#0B1426">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,8 +17,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Magic City Nights">
-<meta property="og:title" content="Magic City Nights">
-<meta property="og:description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta property="og:locale" content="en_US">
+<link rel="canonical" href="https://magiccitynights.com/">
+<meta property="og:title" content="Magic City Nights | Birmingham Date Planner">
+<meta property="og:description" content="Plan a Birmingham date night or night out. Pick restaurants, lounges, bars, dessert and things to do around the Magic City, or roll a surprise plan and send the invite.">
 <meta property="og:url" content="https://magiccitynights.com/">
 <meta property="og:image" content="https://magiccitynights.com/images/og-image.jpg">
 <meta property="og:image:type" content="image/jpeg">
@@ -26,8 +28,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Magic City Nights, Birmingham, AL. A gold crescent moon with the Vulcan statue and the city skyline.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Magic City Nights">
-<meta name="twitter:description" content="Plan a Birmingham date or night out. Pick a spot for each stop, or roll a surprise plan.">
+<meta name="twitter:title" content="Magic City Nights | Birmingham Date Planner">
+<meta name="twitter:description" content="Plan a Birmingham date night or night out. Pick restaurants, lounges, bars, dessert and things to do around the Magic City, or roll a surprise plan and send the invite.">
 <meta name="twitter:image" content="https://magiccitynights.com/images/og-image.jpg">
 <meta name="twitter:image:alt" content="Magic City Nights, Birmingham, AL">
 <link rel="preload" as="image" href="images/logo-simple.webp" type="image/webp">
@@ -104,6 +106,9 @@ button{cursor:pointer}
 .mood .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
 @media (max-width:520px){.mood .sep{display:none}.mood{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .mood button.grown[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
+.mood .onoff{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.08em;vertical-align:1px}
+.mood button.grown[aria-pressed="true"] .onoff{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.mood .grown-hint{flex-basis:100%;font-size:.78rem;color:var(--muted);margin-top:-2px}
 .check{display:flex;gap:8px;align-items:center;font-weight:600}
 .check input{width:auto}
 .filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
@@ -234,6 +239,10 @@ body.events-mode .wrap > :is(.mood,.search,.cuisines,.filters,.tabs,#view-build,
 .feedback p{margin:0;color:var(--muted);font-size:.9rem}
 .fb-btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-family:var(--serif);font-weight:700;font-size:1.02rem;cursor:pointer}
 .fb-btn:hover,.fb-btn[aria-expanded="true"]{background:var(--sel)}
+.fb-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+a.fb-btn{text-decoration:none}
+.fb-suggest{background:var(--accent);color:var(--accent-fg)}
+.fb-suggest:hover{background:var(--accent);filter:brightness(1.07)}
 .fb-btn:focus-visible,.fb-menu a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fb-menu{width:min(100%,360px);display:grid;gap:4px;padding:8px;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:18px;text-align:left}
 .fb-menu[hidden]{display:none}
@@ -394,7 +403,8 @@ body.shared #headline, body.shared #subline{display:none}
     <button data-mood="social" aria-pressed="false">🎉 Social</button>
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
-    <button class="grown" id="grown-toggle" aria-pressed="false">🍷 Grown &amp; sexy</button>
+    <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown &amp; sexy <span class="onoff" aria-hidden="true">OFF</span></button>
+    <span class="grown-hint" id="grown-hint">On/off. Works with any mood.</span>
   </section>
 
   <section class="search" id="search" role="search">
@@ -588,8 +598,8 @@ const SAMPLES = [
 
 /* Starter spots that closed for good, and the old values of starter spots that were renamed or moved.
    Browsers that saved the list earlier get these fixes on their next visit. */
-const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house"];
-const STARTER_OLD = {"s-bygones": {"note": "Cocktail bar in the Battery II building. Check hours before you go"}, "s-cassanova": {"name": "Cassanova Bar and Lounge", "address": "2312 1st Ave N", "area": "Downtown", "note": "Hookah, inventive drinks, photo spots. From a 2022 list, so check it's open"}, "s-dzire": {"name": "Dzire Bar and Lounge", "note": "Hookah lounge. Look it up before you go"}, "s-habitat-feed-social": {"note": "Rooftop at the Grand Bohemian Hotel. Reserve a sunset table"}, "s-high-dive": {"name": "High Dive"}, "s-jasmine-s-soul-food": {"name": "Jasmine's Soul Food"}, "s-k-j-s-elegant-pastries": {"area": "Downtown"}, "s-k1-speed": {"address": "5421 Beacon Dr"}, "s-mo-s-carriages-and-trail-rides": {"area": "McCalla"}, "s-obsidian": {"note": "Upscale cocktail and sushi lounge from Johin'na's owner, connected to Johin'na. Was aiming to open around October 2026, so check it's open"}, "s-premiere-cinema-on-lakeshore": {"name": "Premiere Cinema on Lakeshore"}, "s-sips-n-strokes": {"name": "Sips n Strokes"}, "s-snapper-grabber-land-sea-market-cafe": {"name": "Snapper Grabber Land & Sea Market & Cafe"}, "s-the-alabama-biscuit-co": {"address": "4133 White Oak Dr", "area": "Crestline"}, "s-the-lodge": {"note": "Hidden speakeasy inside Fairway Social at Urban Supply by Railroad Park. Solve a coded message to find the door. Duckpin bowling, live music. Check it's open"}};
+const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house", "s-highlands-bar-grill"];
+const STARTER_OLD = {"s-bygones": {"note": "Cocktail bar in the Battery II building. Check hours before you go"}, "s-cassanova": {"name": "Cassanova Bar and Lounge", "address": "2312 1st Ave N", "area": "Downtown", "note": "Hookah, inventive drinks, photo spots. From a 2022 list, so check it's open"}, "s-dzire": {"name": "Dzire Bar and Lounge", "note": "Hookah lounge. Look it up before you go"}, "s-habitat-feed-social": {"note": "Rooftop at the Grand Bohemian Hotel. Reserve a sunset table"}, "s-high-dive": {"name": "High Dive"}, "s-jasmine-s-soul-food": {"name": "Jasmine's Soul Food"}, "s-k-j-s-elegant-pastries": {"area": "Downtown"}, "s-k1-speed": {"address": "5421 Beacon Dr"}, "s-mo-s-carriages-and-trail-rides": {"area": "McCalla"}, "s-obsidian": {"note": "Upscale cocktail and sushi lounge from Johin'na's owner, connected to Johin'na. Was aiming to open around October 2026, so check it's open", "address": "209 20th St N"}, "s-premiere-cinema-on-lakeshore": {"name": "Premiere Cinema on Lakeshore"}, "s-sips-n-strokes": {"name": "Sips n Strokes"}, "s-snapper-grabber-land-sea-market-cafe": {"name": "Snapper Grabber Land & Sea Market & Cafe"}, "s-the-alabama-biscuit-co": {"address": "4133 White Oak Dr", "area": "Crestline"}, "s-the-lodge": {"note": "Hidden speakeasy inside Fairway Social at Urban Supply by Railroad Park. Solve a coded message to find the door. Duckpin bowling, live music. Check it's open"}, "s-3000-bar": {"address": "1100 20th St S", "note": "Hookah, frozen drinks, lively crowd. From a 2022 list, so check it's open"}, "s-adam-and-eve-cafe": {"address": "1022 20th St S"}, "s-alabama-jazz-hall-of-fame": {"address": "1631 4th Ave N"}, "s-alicias-coffee": {"address": "1510 5th Ave N"}, "s-amc-dine-in-vestavia-hills-10": {"address": "1911 Kentucky Ave"}, "s-aria": {"address": "930 5th Ave N", "note": "VIP-style night with a dress code. From a 2022 list, so check it's open"}, "s-armour-house": {"address": "2309 1st Ave N, Ste 201"}, "s-bandit-patisserie": {"address": "2323 1st Ave N"}, "s-bar-sebastian": {"address": "120 16th St S", "note": "Hidden rooftop bar, you need the password. From a 2022 list, so check it's open"}, "s-barber-vintage-motorsports-museum": {"address": "6030 Barber Motorsports Pkwy"}, "s-bayonet": {"address": "2015 2nd Ave N"}, "s-bettola": {"address": "2930 3rd Ave S"}, "s-birmingham-civil-rights-institute": {"address": "520 16th St N"}, "s-birmingham-rage-room": {"address": "2616 7th Ave S"}, "s-birmingham-zoo": {"address": "2630 Cahaba Rd"}, "s-bottega-cafe": {"address": "2240 Highland Ave S"}, "s-bruto": {"address": "4420 4th Ave S"}, "s-burning-tree-bbq": {"address": "3090 3rd Ave S"}, "s-cala-coffee": {"address": "1826 3rd Ave N"}, "s-carlile-s-bbq": {"address": "3511 6th Ave S"}, "s-central-alabama-paintball-park": {"address": "55 Rosebud Ln, Calera"}, "s-classic-movie-at-the-alabama-theatre": {"address": "1817 3rd Ave N"}, "s-daysol-coffee-lab": {"address": "2616 3rd Ave S"}, "s-dreamland-bbq-southside": {"address": "1427 14th Ave S"}, "s-eden-lounge": {"address": "312 20th St S", "note": "Floral decor and a greenery wall. From a 2022 list, so check it's open"}, "s-eighty-eight": {"address": "2012 Magnolia Ave S", "note": "Piano bar with local musicians. From a 2022 list, so check it's open"}, "s-el-barrio": {"address": "2211 2nd Ave N"}, "s-filter-coffee-parlor": {"address": "1927 11th Ave S"}, "s-frothy-monkey": {"address": "2320 2nd Ave N"}, "s-gatos-and-beans": {"address": "4348 3rd Ct S"}, "s-house-of-found-objects": {"address": "2205 2nd Ave N"}, "s-jim-n-nick-s-five-points": {"address": "1908 11th Ave S"}, "s-johin-na": {"address": "2002 2nd Ave N"}, "s-june-coffee-co": {"address": "213 25th St N"}, "s-land-of-a-thousand-hills": {"address": "2173 Highland Ave"}, "s-live-show-at-iron-city": {"address": "513 22nd St S"}, "s-mcwane-science-center": {"address": "200 19th St N"}, "s-moon-shine-at-the-elyton-hotel": {"address": "1928 1st Ave N"}, "s-nightcap": {"address": "2225 2nd Ave N"}, "s-paper-doll": {"address": "2320 1st Ave N"}, "s-pilcrow-cocktail-cellar": {"address": "2015 1st Ave N"}, "s-pink-lantern": {"address": "2400 1st Ave N"}, "s-pogo": {"address": "2309 1st Ave N"}, "s-pottery-class-at-makebhm": {"address": "4000 3rd Ave S"}, "s-punch-love-coffee": {"address": "4000 3rd Ave S"}, "s-red-lion-lounge": {"note": "Old-school lounge with caricatures on the walls. Check it's open"}, "s-saw-s-soul-kitchen": {"address": "215 41st St S"}, "s-southern-museum-of-flight": {"address": "4343 73rd St N"}, "s-stained-glass-at-red-mountain-makers": {"address": "810 4th Ave N"}, "s-stardome-comedy-club": {"address": "1818 Data Dr"}, "s-sunset-at-vulcan-park": {"address": "1701 Valley View Dr"}, "s-the-daily-edition": {"address": "186 Oxmoor Rd"}, "s-the-escape-game-birmingham": {"address": "300 Summit Blvd, Ste 102"}, "s-the-humidor-room": {"address": "2115 7th Ave S", "note": "Premium cigars and Scotch. Moved from Hoover to Southside in late 2025, so check it's open"}, "s-the-marble-ring": {"address": "430 41st St S", "note": "1920s speakeasy. Go up the stairs to Hot Diggity Dogs and through the blue police call box. Check it's still open"}, "s-the-red-cat-at-railroad-park": {"address": "1701 1st Ave S"}, "s-the-roof-at-the-redmont-hotel": {"address": "2101 5th Ave N"}, "s-topgolf": {"address": "1111 24th St N"}, "s-walk-at-railroad-park": {"address": "1600 1st Ave S"}, "s-yo-mama-s": {"address": "2024 4th Ave N"}};
 let spots = [], nights = [];
 let outing = "date";
 let picks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};   // outing -> slot id -> spot id
@@ -676,6 +686,7 @@ function renderHeader(){
   document.querySelectorAll(".outing[data-outing]").forEach(b => b.setAttribute("aria-pressed", !eventsOn && b.dataset.outing === outing));
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
+  $("#grown-toggle .onoff").textContent = grown ? "ON" : "OFF";
 }
 
 function renderCuisines(){
@@ -840,18 +851,19 @@ function setupFeedback(){
   document.querySelectorAll("[data-feedback]").forEach((box, i) => {
     const id = "fb-menu-" + i;
     box.innerHTML = `<p>Help us make Magic City Nights better.</p>
-      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &amp; Suggestions</button>
+      <div class="fb-row"><a class="fb-btn fb-suggest" href="${esc(feedbackHref(FEEDBACK[0]))}">💡 Suggest a spot</a>
+      <button type="button" class="fb-btn" aria-expanded="false" aria-controls="${id}">💬 Feedback &amp; Suggestions</button></div>
       <div class="fb-menu" id="${id}" hidden>${FEEDBACK.map(f =>
         `<a href="${esc(feedbackHref(f))}"><b>${esc(f.title)}</b><span>${esc(f.hint)}</span></a>`).join("")}</div>`;
-    const btn = box.querySelector(".fb-btn"), menu = box.querySelector(".fb-menu");
+    const btn = box.querySelector("button.fb-btn"), menu = box.querySelector(".fb-menu");
     btn.addEventListener("click", e => { e.stopPropagation(); const open = menu.hidden; closeFeedback(); menu.hidden = !open; btn.setAttribute("aria-expanded", open); });
     menu.addEventListener("click", e => { if (e.target.closest("a")) setTimeout(closeFeedback, 0); e.stopPropagation(); });
   });
   document.addEventListener("click", closeFeedback);
-  document.addEventListener("keydown", e => { if (e.key === "Escape") { const open = document.querySelector(".fb-menu:not([hidden])"); if (open) { closeFeedback(); open.parentElement.querySelector(".fb-btn").focus(); } } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { const open = document.querySelector(".fb-menu:not([hidden])"); if (open) { closeFeedback(); open.parentElement.querySelector("button.fb-btn").focus(); } } });
 }
 function closeFeedback(){
-  document.querySelectorAll(".fb-menu").forEach(m => { m.hidden = true; m.parentElement.querySelector(".fb-btn").setAttribute("aria-expanded", "false"); });
+  document.querySelectorAll(".fb-menu").forEach(m => { m.hidden = true; m.parentElement.querySelector("button.fb-btn").setAttribute("aria-expanded", "false"); });
 }
 setupFeedback();
 
@@ -1069,6 +1081,23 @@ const UPCOMING_EVENTS = [
     venue:"UAB Alys Stephens Center", address:"1200 10th Ave S, Birmingham, AL",
     blurb:"New Orleans jazz for the holidays.",
     url:"https://www.alysstephens.org/events/preservation-hall/"},
+  {id:"yamayas-creative-sips-2026-12-05", name:"Creative Sips Paint & Sip at YaMaya's",
+    start:"2026-12-05T18:00:00-06:00", end:"2026-12-05T20:30:00-06:00",
+    venue:"YaMaya's Tea N Spice Boutique", address:"1128 East Lake Blvd, Suite 120, Birmingham, AL 35217",
+    blurb:"Paint and sip night. $35.", url:"https://www.facebook.com/profile.php?id=61563667411419", cta:"Details"},
+  {id:"yamayas-herbal-syrup-lab-2026-12-12", name:"Herbal Syrup Lab at YaMaya's",
+    start:"2026-12-12T18:00:00-06:00", end:"2026-12-12T20:30:00-06:00",
+    venue:"YaMaya's Tea N Spice Boutique", address:"1128 East Lake Blvd, Suite 120, Birmingham, AL 35217",
+    blurb:"Make your own herbal syrups. $45.", url:"https://www.facebook.com/profile.php?id=61563667411419", cta:"Details"},
+  {id:"yamayas-nye-potluck-2026", name:"The First Sip & The Last Bite: NYE Community Potluck",
+    start:"2026-12-31T20:00:00-06:00", end:"2027-01-01T01:00:00-06:00",
+    venue:"Hosted by YaMaya's · Location TBA",
+    blurb:"Ring in the new year with a community potluck. Free, RSVP required.", url:"https://www.facebook.com/profile.php?id=61563667411419", cta:"RSVP"},
+  {id:"the-notebook-bjcc-2027-04-07", name:"The Notebook (musical)",
+    start:"2027-04-07T19:30:00-05:00",
+    venue:"BJCC Concert Hall", address:"2100 Richard Arrington Jr Blvd N, Birmingham, AL 35203",
+    blurb:"Broadway in Birmingham. The show runs April 6–11, 2027.",
+    url:"https://www.bjcc.org/upcoming-events/the-notebook-presented-by-broadway-in-birmingham/"},
 ];
 // No end time: the event stays up until midnight Birmingham time on its day (start is "YYYY-MM-DDTHH:MM:SS-06:00").
 const eventEnds = e => e.end ? new Date(e.end) : new Date(e.start.slice(0, 10) + "T23:59:59" + e.start.slice(19));
@@ -1083,7 +1112,7 @@ function renderUpcoming(){
       <b>${esc(e.name)}</b>
       ${e.blurb ? `<p>${esc(e.blurb)}</p>` : ""}
       <div class="ev-links">
-        ${safeUrl(e.url) ? `<a class="btn primary small" href="${esc(e.url)}" target="_blank" rel="noopener">Tickets ↗</a>` : ""}
+        ${safeUrl(e.url) ? `<a class="btn primary small" href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.cta || "Tickets")} ↗</a>` : ""}
         <button type="button" class="btn small" data-evup="${esc(e.id)}">Add to my night</button>
         ${safeUrl(dir) ? `<a class="btn ghost small" href="${esc(dir)}" target="_blank" rel="noopener">Directions ↗</a>` : ""}
       </div></article>`;
@@ -1516,7 +1545,7 @@ render();
             if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
             // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
             const old = STARTER_OLD[sp.id];
-            if (old) for (const k of Object.keys(old)) if (sp[k] === old[k]) { if (f[k]) sp[k] = f[k]; else delete sp[k]; changed = true; }
+            if (old) for (const k of Object.keys(old)) if ([].concat(old[k]).includes(sp[k])) { if (f[k]) sp[k] = f[k]; else delete sp[k]; changed = true; }
           }
           // Starter spots that have closed for good come off the list.
           const before = spots.length;
