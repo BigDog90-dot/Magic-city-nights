@@ -672,7 +672,7 @@ const CATS = {
   brunch:{label:"Brunch", plural:"Brunch spots"},
 };
 const CUISINES = {
-  soul:"🍗 Soul & Southern", bbq:"🔥 BBQ", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian",
+  soul:"🍗 Soul & Southern", bbq:"🔥 BBQ", seafood:"🦞 Seafood", steak:"🥩 Steak", asian:"🍣 Japanese & Asian", chinese:"🥡 Chinese",
   italian:"🍝 Italian", mexican:"🌮 Mexican", american:"🍷 Upscale American", vegan:"🌱 Vegan", health:"🥗 Health"
 };
 /* Diet chips. A spot keeps one main "cuisine" and can carry extra tags (tags:["vegan","health"]).
@@ -752,7 +752,9 @@ const dressWord = d => d === "dressy" ? "dressed up" : d === "casual" ? "casual"
 const moodWord = m => m === "social" ? "social" : m === "lowkey" ? "low key" : "";
 const cuisineWord = s => s.category === "food" && CUISINES[s.cuisine] ? CUISINES[s.cuisine].replace(/^\S+\s/, "") : "";
 const tagsOf = s => Array.isArray(s.tags) ? s.tags : [];
-const foodKeys = s => [s.cuisine, ...tagsOf(s)].filter(Boolean);
+// Chinese spots also count as Asian, so the Japanese & Asian chip keeps showing them.
+const CUISINE_ALSO = {chinese:["asian"]};
+const foodKeys = s => [s.cuisine, ...(CUISINE_ALSO[s.cuisine] || []), ...tagsOf(s)].filter(Boolean);
 // "100% vegan" only for fully vegan kitchens; other tagged spots say "vegan options".
 const dietWord = s => { const t = tagsOf(s); return [t.includes("all-vegan") ? "100% vegan" : t.includes("vegan") && s.cuisine !== "vegan" ? "vegan options" : "", t.includes("health") && s.cuisine !== "health" ? "healthy picks" : ""].filter(Boolean).join(" · "); };
 // Meal tags from listed hours (spots.json "meals"): breakfast by 10 AM, lunch by 2 PM, dinner by 5 PM, brunch 10 AM-2 PM.
@@ -1067,7 +1069,7 @@ const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLow
 function haystack(s){
   const c = CATS[s.category] || {};
   const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
-  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), mealsOf(s).join(" "), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "chinese" ? "chinese asian" + (tagsOf(s).includes("szechuan") ? " sichuan szechwan" : "") + (tagsOf(s).includes("dim sum") ? " dumplings" : "") : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), mealsOf(s).join(" "), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1500,6 +1502,31 @@ const NIGHT_HOURS = {
   "s-house-of-havana": "Mo-Th 11:00-24:00; Fr-Sa 11:00-02:00; Su 11:00-22:00",
   // Corbeau Wine Bar, Trussville (added Nov 24, 2026; hours from corbeaubar.com and Yelp):
   "s-corbeau-wine-bar": "Tu-Th 16:00-22:00; Fr 16:00-23:00; Sa 12:00-23:00; Su 12:00-19:00",
+  // Chinese restaurants (added Nov 24, 2026; hours from each spot's own site, Google and Yelp listings):
+  "s-foo-hai": "Tu 11:00-14:30; We-Sa 11:00-15:00; Su 11:00-14:30; Tu-Su 16:30-22:00",
+  "s-mr-chens-homewood": "Mo-Su 11:00-21:00",
+  "s-red-pearl": "Mo-Su 10:00-21:00",
+  "s-great-wall-homewood": "Tu-Sa 11:00-15:00; Tu-Th 16:30-21:30; Fr-Sa 16:30-22:00; Su 11:00-21:30",
+  "s-chop-suey-inn": "Tu-Su 11:00-21:00",
+  "s-new-china-town": "Mo-Th 11:00-22:00; Fr-Sa 11:00-23:00",
+  "s-magic-wok": "Mo-Sa 10:30-20:00",
+  "s-china-master-southside": "Mo-Fr 10:30-20:30; Sa 11:00-20:30",
+  "s-chengdu-cuisine": "Tu-Sa 11:00-15:00; Tu-Sa 16:00-21:30; Su 11:00-21:30",
+  "s-mr-chens-hoover": "Mo,We-Su 11:00-21:00",
+  "s-zous-kitchen": "Tu-Th,Su 10:50-21:00; Fr-Sa 10:50-21:30",
+  "s-golden-city-pelham": "Tu-Sa 11:00-22:00; Su 11:00-21:30",
+  "s-panda-house-alabaster": "Tu-Th,Su 11:00-21:00; Fr-Sa 11:00-21:30",
+  "s-mings-cuisine": "Tu-Su 11:00-14:30; Tu-Su 16:30-21:30",
+  "s-pf-changs-summit": "Mo-Th 11:00-22:00; Fr-Sa 11:00-23:00; Su 11:00-22:00",
+  "s-eating-time": "Mo-Fr,Su 11:00-14:30; Mo-Fr,Su 16:30-21:00",
+  "s-chen-express-crestline": "Mo-Th,Su 11:00-21:00; Fr 11:00-21:30",
+  "s-chen-express-ii": "Mo-Fr,Su 11:00-20:30",
+  "s-tasty-china": "Tu-Sa 11:00-22:00; Su 11:00-21:30",
+  "s-china-way": "Tu-Th,Su 10:00-21:00; Fr-Sa 10:00-22:00",
+  "s-the-palace-trussville": "Tu-Su 11:00-14:00; Tu-Sa 16:00-21:00; Su 16:00-20:00",
+  "s-happy-wok-trussville": "Mo-Th,Su 11:00-21:00; Fr-Sa 11:00-21:30",
+  "s-yus-garden": "Mo,We-Fr,Su 11:00-21:00; Sa 16:00-21:00",
+  "s-golden-dragon-bessemer-rd": "Mo-Th 10:30-21:00; Fr 10:30-21:30; Sa 11:00-21:30",
   "s-alicias-coffee": "Mo-Sa 07:00-16:00",
   "s-bandit-patisserie": "Mo-Su 07:30-14:00",
   "s-bar-sebastian": "Tu-Th 17:00-20:30; Fr-Sa 17:00-23:30; Su 12:00-15:00",
