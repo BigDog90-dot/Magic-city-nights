@@ -721,6 +721,7 @@ for (const [id, old] of Object.entries({
   "s-amore-ristorante-italiano": ["https://www.opentable.com/r/amore-birmingham-2", "https://www.opentable.com/r/amore-birmingham-2?covers=2"]
 })) (STARTER_OLD[id] = STARTER_OLD[id] || {}).reserve = old;
 // Details that changed later: a phone that saved the old value gets the new one (values the person edited stay).
+Object.assign(STARTER_OLD["s-yo-mama-s"] = STARTER_OLD["s-yo-mama-s"] || {}, {note: "Walk in, expect a weekend wait"});
 Object.assign(STARTER_OLD["s-little-donkey"] = STARTER_OLD["s-little-donkey"] || {}, {note: "Fun Mexican spot. Walk in"});
 Object.assign(STARTER_OLD["s-churro-station"] = STARTER_OLD["s-churro-station"] || {}, {address: "329 Summit Blvd, Birmingham, AL 35243", area: "The Summit", note: "Filled churros", lat: 33.451611, lng: -86.730351});
 Object.assign(STARTER_OLD["s-etcetera-social"] = STARTER_OLD["s-etcetera-social"] || {}, {area: "Downtown"});
@@ -754,8 +755,12 @@ const tagsOf = s => Array.isArray(s.tags) ? s.tags : [];
 const foodKeys = s => [s.cuisine, ...tagsOf(s)].filter(Boolean);
 // "100% vegan" only for fully vegan kitchens; other tagged spots say "vegan options".
 const dietWord = s => { const t = tagsOf(s); return [t.includes("all-vegan") ? "100% vegan" : t.includes("vegan") && s.cuisine !== "vegan" ? "vegan options" : "", t.includes("health") && s.cuisine !== "health" ? "healthy picks" : ""].filter(Boolean).join(" · "); };
+// Meal tags from listed hours (spots.json "meals"): breakfast by 10 AM, lunch by 2 PM, dinner by 5 PM, brunch 10 AM-2 PM.
+const MEAL_WORDS = {breakfast:"breakfast", brunch:"brunch", lunch:"lunch", dinner:"dinner"};
+const mealsOf = s => Array.isArray(s.meals) ? s.meals.filter(m => MEAL_WORDS[m]) : [];
+const mealWord = s => { const m = mealsOf(s); return m.length ? m.map((w, i) => i ? w : w[0].toUpperCase() + w.slice(1)).join(", ") : ""; };
 const placeTags = s => tagsOf(s).filter(t => !DIET.includes(t) && t !== "all-vegan");
-const metaLine = s => [cuisineWord(s), dietWord(s), ...placeTags(s).map(esc), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const metaLine = s => [cuisineWord(s), dietWord(s), mealWord(s), ...placeTags(s).map(esc), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -792,8 +797,17 @@ function cuisineOk(s, cats){
   if (diet.length && roles.some(c => DIET_CATS.includes(c))) return diet.some(k => keys.includes(k));
   return true;
 }
-function passes(s, cats){
+// Stops that imply a meal. A spot with known meals must fit; one without hours stays in.
+const SLOT_MEALS = {date:{food:["dinner"]}, girls:{dinner:["dinner"]}, sun:{brunch:["brunch"], food:["dinner"]},
+  brunch:{brunch:["brunch"]}, coffee:{bite:["breakfast","brunch","lunch"]}};
+function mealOk(s, slot){
+  const want = slot && SLOT_MEALS[outing] && SLOT_MEALS[outing][slot.id];
+  if (!want || !Array.isArray(s.meals)) return true;
+  return want.some(m => s.meals.includes(m));
+}
+function passes(s, cats, slot){
   const f = filters();
+  if (slot && !mealOk(s, slot)) return false;
   if (Number(s.price) && Number(s.price) > f.budget) return false;
   if (f.area && (s.area||"").trim().toLowerCase() !== f.area.trim().toLowerCase()) return false;
   if (f.setting && s.setting && s.setting !== "both" && s.setting !== f.setting) return false;
@@ -859,7 +873,7 @@ function renderBuild(){
   view.innerHTML = O().slots.map(slot => {
     const all = spots.filter(s => inCats(s, slot.cats));
     const taken = takenElsewhere(slot.id);
-    const list = all.filter(s => passes(s, slot.cats) && !taken.has(s.id)).sort(soonLast);
+    const list = all.filter(s => passes(s, slot.cats, slot) && !taken.has(s.id)).sort(soonLast);
     const word = slot.cats.map(c => CATS[c].plural.toLowerCase()).join(" or ");
     const body = list.length
       ? list.map(s => `<button class="spot" style="--c:${color(s.category)}" data-slot="${slot.id}" data-id="${esc(s.id)}" aria-pressed="${P()[slot.id]===s.id}">
@@ -1017,7 +1031,7 @@ setupFeedback();
 
 /* ---------- actions ---------- */
 function roll(){
-  const usable = spots.filter(s => O().slots.some(sl => inCats(s, sl.cats) && passes(s, sl.cats)));
+  const usable = spots.filter(s => O().slots.some(sl => inCats(s, sl.cats) && passes(s, sl.cats, sl)));
   if (!usable.length) { toast(spots.length ? "No spots fit those filters" : "Add some spots first"); return; }
   // keep locked picks, clear the rest, then fill without repeats
   for (const slot of O().slots) if (!(L()[slot.id] && spotById(P()[slot.id]))) { fresh.add(slot.id); }
@@ -1026,7 +1040,7 @@ function roll(){
   for (const slot of O().slots) {
     if (!fresh.has(slot.id)) continue;
     const taken = takenElsewhere(slot.id);
-    const pool = spots.filter(s => inCats(s, slot.cats) && passes(s, slot.cats) && !s.soon && !taken.has(s.id));
+    const pool = spots.filter(s => inCats(s, slot.cats) && passes(s, slot.cats, slot) && !s.soon && !taken.has(s.id));
     if (!pool.length) continue;
     const others = pool.filter(s => s.id !== prev[slot.id]);
     const from = others.length ? others : pool;
@@ -1053,7 +1067,7 @@ const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLow
 function haystack(s){
   const c = CATS[s.category] || {};
   const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
-  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), mealsOf(s).join(" "), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1492,11 +1506,11 @@ const NIGHT_HOURS = {
   "s-cafe-dupont": "Tu-Sa eve",
   "s-carlile-s-bbq": "Mo-Fr 10:30-15:00",
   "s-center-point-food-truck-park": "Sa-Su 12:00-17:00",
-  "s-chez-fonfon": "Tu-Sa eve",
+  "s-chez-fonfon": "Tu-Fr 11:00-21:30; Sa 16:00-21:30",
   "s-demetri-s-bbq": "Mo-Sa 06:00-16:00; Su 09:30-14:00",
   "s-eagles-restaurant": "Tu-Fr,Su 10:30-15:30",
   "s-eighty-eight": "Tu-Su late",
-  "s-high-dive": "We-Su late",
+  "s-high-dive": "Su,We-Th 08:00-22:00; Fr-Sa 08:00-24:00",
   "s-hold-your-horses": "Tu-Su 17:00-24:00",
   "s-johnnys-homewood": "Su-Fr 11:00-14:30",
   "s-mama-nem-southern-kitchen": "Mo-Sa 06:30-19:00; Su 11:00-19:00",
@@ -1510,11 +1524,19 @@ const NIGHT_HOURS = {
   "s-ruth-s-cafe": "Tu-Th 06:00-18:30; Fr 07:00-18:30; Sa 07:00-19:00; Su 11:00-17:00",
   "s-simones-thirsty-thursday": "Th 15:00-22:00",
   "s-skates-280": "Fr-Su late",
-  "s-the-bright-star": "Tu-Su eve",
+  "s-the-bright-star": "Tu-Su 11:00-15:00; Tu-Th,Su 16:30-20:30; Fr-Sa 16:30-21:00",
   "s-the-daily-edition": "Mo-Su 07:00-13:00",
   "s-trap-ktchxxn": "Mo 17:00-24:00; We-Fr 17:00-02:00; Sa-Su 11:00-02:00",
   "s-yamayas-tea-n-spice": "We-Sa 11:00-21:00; Su 12:00-18:00",
   "s-yo-mama-s": "Mo-Fr 10:30-14:30",
+  // Brunch and food spots for the meal audit (hours checked Nov 24, 2026 on each spot's own site):
+  "s-big-bad-breakfast": "Mo-Su 07:00-14:30",
+  "s-la-f-te": "We-Fr 17:00-22:00; Sa 10:00-22:00; Su 10:00-21:00",
+  "s-salud-taqueria": "Mo-Th 11:00-22:00; Fr-Sa 11:00-24:00; Su 11:00-20:00",
+  "s-the-alabama-biscuit-co": "Mo-Sa 07:00-14:00; Su 08:00-14:00",
+  "s-the-essential": "Mo-Fr 11:00-21:00; Sa-Su 09:00-14:00; Sa-Su 17:00-21:00",
+  "s-the-flying-biscuit-cafe": "Mo-Fr 07:00-14:00; Sa-Su 07:00-15:00",
+  "s-trattoria-zaza": "Sa-Su 10:00-14:00; Sa 16:00-21:00",
 };
 const NIGHT_DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 const hm = t => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
@@ -1599,7 +1621,7 @@ function eventsTonight(now = new Date()){
   return [...feat, ...up].sort((a, b) => new Date(a.start) - new Date(b.start));
 }
 // Spots the Build view shows for this kind of night with the current filters.
-const shownSpots = () => spots.filter(s => O().slots.some(slot => inCats(s, slot.cats) && passes(s, slot.cats))).sort(soonLast);
+const shownSpots = () => spots.filter(s => O().slots.some(slot => inCats(s, slot.cats) && passes(s, slot.cats, slot))).sort(soonLast);
 function renderTonight(){
   const box = $("#tonight");
   box.hidden = !tonight || tab === "spots";
@@ -2101,7 +2123,9 @@ render();
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
             // Diet tags (vegan, health) and extra stop types come from the starter list.
             if (Array.isArray(f.tags) && JSON.stringify(sp.tags || []) !== JSON.stringify(f.tags)) { sp.tags = [...f.tags]; changed = true; }
-            if (Array.isArray(f.also) && !Array.isArray(sp.also)) { sp.also = [...f.also]; changed = true; }
+            if (Array.isArray(f.also)) { const u = [...new Set([...(Array.isArray(sp.also) ? sp.also : []), ...f.also])]; if (JSON.stringify(u) !== JSON.stringify(sp.also || [])) { sp.also = u; changed = true; } }
+            // Meal tags (breakfast, brunch, lunch, dinner) come from the starter list's hours.
+            if (Array.isArray(f.meals) ? JSON.stringify(sp.meals || null) !== JSON.stringify(f.meals) : sp.meals !== undefined) { if (Array.isArray(f.meals)) sp.meals = [...f.meals]; else delete sp.meals; changed = true; }
             if (f.soon && sp.soon === undefined) { sp.soon = true; changed = true; }
             // A starter spot that was renamed or moved: update it, unless the person changed that field themselves.
             const old = STARTER_OLD[sp.id];
