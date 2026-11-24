@@ -1,10 +1,11 @@
 /* Magic City Nights service worker: basic offline support.
-   - Pages (navigations, incl. ?plan= share links) and spots.json: network-first, cache fallback.
+   - Pages (navigations, incl. ?plan= share links), spots.json and events.json: network-first, cache fallback.
+   - Push: shows same-night event alerts and opens /?view=events when tapped.
    - Manifests (manifest.json, manifest.webmanifest): network-first, cache fallback.
    - Same-origin static assets (icons, images): cache-first.
    - Google Fonts: stale-while-revalidate.
    - Everything else cross-origin (Kit, GoatCounter, ticket APIs, etc.) is left alone. */
-const VERSION = "mcn-v2"; // bump to clear old caches when this file changes
+const VERSION = "mcn-v3"; // bump to clear old caches when this file changes
 const CACHE = VERSION + "-core";
 const FONT_CACHE = VERSION + "-fonts";
 
@@ -12,6 +13,7 @@ const CORE = [
   "/",
   "/index.html",
   "/spots.json",
+  "/events.json",
   "/manifest.json",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
@@ -108,7 +110,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Spot data and the manifest change over time: fresh when online, cached copy when offline.
-  if (url.pathname === "/spots.json" || url.pathname === "/manifest.json" || url.pathname === "/manifest.webmanifest") {
+  if (url.pathname === "/events.json" || url.pathname === "/spots.json" || url.pathname === "/manifest.json" || url.pathname === "/manifest.webmanifest") {
     event.respondWith(networkFirst(request, url.pathname));
     return;
   }
@@ -120,4 +122,54 @@ self.addEventListener("fetch", (event) => {
   if (/\.(?:png|jpe?g|webp|gif|svg|ico|css|js|woff2?)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(request));
   }
+});
+
+// ---------- Same-night event alerts (Web Push) ----------
+// Payload (JSON, sent by workers/push): { title, body, eventTitle, venue, time, url, tag }
+self.addEventListener("push", (event) => {
+  let data = {};
+  if (event.data) {
+    try { data = event.data.json() || {}; }
+    catch (err) { data = { body: event.data.text() }; }
+  }
+  const eventLine = data.eventTitle
+    ? `${data.eventTitle} is tonight${data.venue ? " at " + data.venue : ""}${data.time ? " \u00b7 " + data.time : ""}`
+    : "";
+  const title = data.title || "Tonight in Birmingham";
+  const body = data.body || eventLine || "Something good is happening in Birmingham tonight.";
+  const options = {
+    body,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: data.tag || "mcn-tonight",
+    renotify: true,
+    lang: "en-US",
+    timestamp: Date.now(),
+    data: { url: data.url || "/?view=events" }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  let target;
+  try {
+    const u = new URL((event.notification.data && event.notification.data.url) || "/?view=events", self.location.origin);
+    target = u.origin === self.location.origin ? u.href : new URL("/?view=events", self.location.origin).href;
+  } catch (err) {
+    target = new URL("/?view=events", self.location.origin).href;
+  }
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const mine = wins.find((c) => { try { return new URL(c.url).origin === self.location.origin; } catch (e) { return false; } });
+    if (mine) {
+      try {
+        const nav = mine.navigate ? await mine.navigate(target) : null;
+        return (nav || mine).focus();
+      } catch (err) {
+        try { return await mine.focus(); } catch (e) { /* fall through */ }
+      }
+    }
+    return self.clients.openWindow(target);
+  })());
 });

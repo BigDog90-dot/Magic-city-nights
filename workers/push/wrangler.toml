@@ -1,0 +1,32 @@
+# Magic City Nights push alerts: Cloudflare Workers FREE plan (Workers + KV + Cron Triggers).
+name = "mcn-push"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# Subscriptions + "already sent tonight" markers.
+# Run `npx wrangler kv namespace create PUSH_SUBS` and paste the id it prints below.
+[[kv_namespaces]]
+binding = "PUSH_SUBS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Once a day at 19:00 UTC = 1 PM Central (CST, Nov-Mar) / 2 PM Central (CDT, Mar-Nov):
+# checks events.json and alerts everyone about shows happening that night.
+[triggers]
+crons = ["0 19 * * *"]
+
+[vars]
+EVENTS_URL = "https://magiccitynights.com/events.json"
+SITE_URL = "https://magiccitynights.com/"
+TIMEZONE = "America/Chicago"
+VAPID_SUBJECT = "https://magiccitynights.com/"
+# PUBLIC key from `node scripts/generate-vapid.mjs` (safe to commit). The PRIVATE key goes in a secret, never here.
+VAPID_PUBLIC_KEY = ""
+# Max pushes per run. Free plan allows 50 outbound requests per invocation; raise only on a paid plan.
+SEND_LIMIT = "45"
+# Extra comma-separated origins allowed to subscribe (magiccitynights.com and localhost are built in).
+ALLOWED_ORIGINS = ""
+
+# Secrets (set with `npx wrangler secret put <NAME>`, never committed):
+#   VAPID_PRIVATE_KEY  - private key from scripts/generate-vapid.mjs
+#   ADMIN_TOKEN        - long random password for /admin/* routes (16+ characters)

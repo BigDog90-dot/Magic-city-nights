@@ -2847,4 +2847,302 @@ dialog.mcn-ios::backdrop{background:rgb(5 10 20 / .78)}
   all();
 })();
 </script>
+<style>
+/* Same-night event alerts (Web Push): "Get alerts" pill, info dialog, post-install offer */
+.mcn-alerts-row{display:flex;justify-content:center;margin:10px 0 0}
+.mcn-alerts{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border-radius:999px;border:1.5px solid #2A3654;background:#16213A;color:#F5F1E8;font-family:var(--body);font-weight:700;font-size:.86rem;line-height:1.2;cursor:pointer;white-space:nowrap;max-width:100%}
+.mcn-alerts .onoff{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid #2A3654;color:#A9B0C2;font-size:.66rem;font-weight:800;letter-spacing:.08em}
+.mcn-alerts[aria-pressed="true"]{background:#2A2410;border-color:#D4AF37;color:#D4AF37}
+.mcn-alerts[aria-pressed="true"] .onoff{background:#D4AF37;border-color:#D4AF37;color:#0B1426}
+.mcn-alerts[data-state="blocked"]{color:#A9B0C2}
+.mcn-alerts[aria-busy="true"]{opacity:.65;cursor:progress}
+.mcn-alerts:focus-visible,.mcn-push-offer button:focus-visible{outline:2px solid #F5F1E8;outline-offset:2px}
+dialog.mcn-push-dlg .mcn-push-actions{display:grid;gap:8px;margin-top:14px}
+dialog.mcn-push-dlg .mcn-push-actions .mcn-ios-done{margin-top:0}
+dialog.mcn-push-dlg .mcn-push-2nd{min-height:44px;border:1px solid #2A3654;border-radius:999px;background:#0B1426;color:#F5F1E8;font-family:var(--display);font-weight:700;font-size:.95rem;cursor:pointer}
+dialog.mcn-push-dlg .mcn-push-sample{margin:12px 0 0;display:flex;gap:10px;align-items:center;background:#0B1426;border:1px solid #2A3654;border-radius:14px;padding:10px 12px}
+dialog.mcn-push-dlg .mcn-push-sample img{width:34px;height:34px;border-radius:8px;flex:0 0 auto}
+dialog.mcn-push-dlg .mcn-push-sample span{display:grid;gap:1px;font-size:.84rem;line-height:1.35;color:#A9B0C2;min-width:0;overflow-wrap:anywhere}
+dialog.mcn-push-dlg .mcn-push-sample b{color:#F5F1E8;font-size:.86rem}
+.mcn-push-offer{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:999;max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 8px 10px 12px;background:#16213A;color:#F5F1E8;border:1px solid #2A3654;border-top:1px solid rgb(212 175 55 / .45);border-radius:18px;box-shadow:0 14px 34px rgb(0 0 0 / .5);font-family:var(--body);box-sizing:border-box;transition:transform .28s ease,opacity .28s ease}
+.mcn-push-offer.mcn-out{transform:translateY(calc(100% + 24px));opacity:0}
+.mcn-push-offer .mcn-po-txt{flex:1 1 auto;min-width:0;display:grid;gap:1px;line-height:1.2}
+.mcn-push-offer .mcn-po-txt b{font-family:var(--display);font-size:.96rem}
+.mcn-push-offer .mcn-po-txt span{font-size:.8rem;color:#A9B0C2;overflow-wrap:anywhere}
+.mcn-push-offer .mcn-po-on{flex:0 0 auto;min-height:44px;padding:0 15px;border:0;border-radius:999px;background:#D4AF37;color:#0B1426;font-family:var(--display);font-weight:800;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.mcn-push-offer .mcn-po-x{flex:0 0 auto;width:36px;height:44px;border:0;background:none;color:#A9B0C2;font-size:1.35rem;line-height:1;cursor:pointer;padding:0}
+@media (max-width:359px){.mcn-push-offer .mcn-po-txt span{display:none}}
+body.mcn-has-inst .mcn-push-offer{display:none}
+.mcn-push-toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,0);z-index:1001;max-width:calc(100% - 32px);box-sizing:border-box;background:#0B1426;color:#F5F1E8;border:1px solid #D4AF37;border-radius:999px;padding:10px 16px;font-family:var(--body);font-size:.88rem;font-weight:600;box-shadow:0 10px 28px rgb(0 0 0 / .5);text-align:center;transition:opacity .25s ease}
+.mcn-push-toast.mcn-out{opacity:0}
+@media (prefers-reduced-motion:reduce){.mcn-push-offer,.mcn-push-toast{transition:none}}
+</style>
+<script>
+/* Same-night event alerts (Web Push). Vanilla JS, no network calls until someone taps "Get alerts".
+   To go live, paste the two values printed by `wrangler deploy` / `node scripts/generate-vapid.mjs`
+   (see workers/push/README.md). Leave vapidPublicKey blank to fetch it from the Worker. */
+var PUSH_CONFIG = { workerUrl: "", vapidPublicKey: "" };
+(function () {
+  var nav = window.navigator, ua = nav.userAgent || "";
+  var isIOS = (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) && !window.MSStream;
+  var isAndroid = /Android/i.test(ua);
+  var mq = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
+  function isStandalone() { return nav.standalone === true || !!(mq && mq.matches); }
+  var hasPush = "serviceWorker" in nav && "PushManager" in window && "Notification" in window && window.isSecureContext !== false;
+
+  var LS = { on: "mcn-push-on", api: "mcn-push-api", key: "mcn-push-vapid", offer: "mcn-push-offer-dismissed", sync: "mcn-push-synced" };
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+
+  // Optional test override: ?pushApi=https://mcn-push.<you>.workers.dev&vapidKey=... (saved on this device). ?pushApi=off clears it.
+  function okApi(u) { return /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.workers\.dev\/?$/i.test(u) || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(u); }
+  try {
+    var qs = new URLSearchParams(location.search), qApi = qs.get("pushApi"), qKey = qs.get("vapidKey");
+    if (qApi != null || qKey != null) {
+      if (qApi === "off" || qApi === "") { lsSet(LS.api, null); lsSet(LS.key, null); }
+      else if (qApi && okApi(qApi)) { lsSet(LS.api, qApi.replace(/\/+$/, "")); lsSet(LS.key, qKey && /^[A-Za-z0-9_-]{80,100}$/.test(qKey) ? qKey : null); }
+      qs.delete("pushApi"); qs.delete("vapidKey");
+      var rest = qs.toString();
+      history.replaceState(history.state, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
+    }
+  } catch (e) {}
+  function apiUrl() { return (lsGet(LS.api) || PUSH_CONFIG.workerUrl || "").replace(/\/+$/, ""); }
+  function vapidKey() { return lsGet(LS.key) || PUSH_CONFIG.vapidPublicKey || ""; }
+  function configured() { return !!apiUrl(); }
+
+  function b64ToBytes(s) {
+    var b = (s + "===".slice((s.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b), out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function post(path, body) {
+    return fetch(apiUrl() + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), mode: "cors", credentials: "omit" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
+  function getReg() {
+    if (!("serviceWorker" in nav)) return Promise.resolve(null);
+    return nav.serviceWorker.getRegistration().then(function (reg) {
+      return reg || nav.serviceWorker.register("/sw.js");
+    }).then(function () { return nav.serviceWorker.ready; });
+  }
+  function platform() { return isIOS ? "ios" : isAndroid ? "android" : "desktop"; }
+
+  // ---------- UI ----------
+  var pill = null, dlg = null, offer = null, busy = false;
+  function state() {
+    if (isIOS && !isStandalone()) return "ios-install";
+    if (!hasPush) return "unsupported";
+    if (Notification.permission === "denied") return "blocked";
+    if (lsGet(LS.on) === "1" && Notification.permission === "granted") return "on";
+    return "off";
+  }
+  function paint() {
+    if (!pill) return;
+    var s = state();
+    pill.hidden = s === "unsupported";
+    pill.dataset.state = s;
+    pill.setAttribute("aria-pressed", s === "on" ? "true" : "false");
+    pill.innerHTML = s === "on" ? '\ud83d\udd14 Alerts <span class="onoff">ON</span>'
+      : s === "blocked" ? '\ud83d\udd15 Alerts blocked'
+      : '\ud83d\udd14 Get alerts <span class="onoff" aria-hidden="true">OFF</span>';
+    pill.setAttribute("aria-label", s === "on" ? "Same-night event alerts are on. Tap to turn off." : s === "blocked" ? "Notifications are blocked. Tap for how to turn them back on." : "Get same-night event alerts");
+  }
+  function mountPill() {
+    var header = document.querySelector(".wrap > header") || document.querySelector("header");
+    if (!header || document.getElementById("mcn-alerts")) return;
+    var row = document.createElement("div");
+    row.className = "mcn-alerts-row";
+    pill = document.createElement("button");
+    pill.type = "button"; pill.id = "mcn-alerts"; pill.className = "mcn-alerts";
+    pill.title = "Same-night alerts for Birmingham shows and concerts";
+    row.appendChild(pill);
+    header.appendChild(row);
+    pill.addEventListener("click", onPill);
+    paint();
+  }
+
+  function toast(msg) {
+    var t = document.createElement("div");
+    t.className = "mcn-push-toast mcn-out"; t.setAttribute("role", "status"); t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.remove("mcn-out"); }); });
+    setTimeout(function () { t.classList.add("mcn-out"); setTimeout(function () { t.remove(); }, 300); }, 3200);
+  }
+
+  var SAMPLE = '<div class="mcn-push-sample" aria-hidden="true"><img src="/icons/icon-192.png" width="34" height="34" alt=""><span><b>Tonight in Birmingham</b>A Motown Christmas is tonight at the Alabama Theatre \u00b7 7:00 PM</span></div>';
+  function showDialog(title, lead, actions) {
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.className = "mcn-ios mcn-push-dlg"; dlg.id = "mcn-push-dlg";
+      dlg.setAttribute("aria-labelledby", "mcn-push-title"); dlg.setAttribute("aria-describedby", "mcn-push-lead");
+      document.body.appendChild(dlg);
+      dlg.addEventListener("click", function (e) {
+        if (e.target !== dlg) return;
+        var r = dlg.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dlg.close();
+      });
+      dlg.addEventListener("close", function () { if (pill) pill.focus({ preventScroll: true }); });
+    }
+    dlg.innerHTML = '<button type="button" class="mcn-ios-close" aria-label="Close">\u00d7</button>' +
+      '<div class="mcn-ios-head"><img src="/icons/icon-192.png" width="48" height="48" alt=""><h2 id="mcn-push-title">' + title + '</h2></div>' +
+      '<p class="mcn-ios-lead" id="mcn-push-lead">' + lead + '</p>' + SAMPLE +
+      '<div class="mcn-push-actions">' + (actions || []).map(function (a, i) {
+        return '<button type="button" class="' + (i === 0 ? "mcn-ios-done" : "mcn-push-2nd") + '" data-i="' + i + '">' + a.label + '</button>';
+      }).join("") + '</div>';
+    dlg.querySelector(".mcn-ios-close").addEventListener("click", function () { dlg.close(); });
+    [].forEach.call(dlg.querySelectorAll(".mcn-push-actions button"), function (b) {
+      b.addEventListener("click", function () { var a = actions[+b.dataset.i]; dlg.close(); if (a.run) a.run(); });
+    });
+    if (dlg.open) return;
+    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+
+  function blockedHelp() {
+    var how = isIOS ? "On iPhone: Settings \u203a Notifications \u203a Magic City Nights \u203a Allow Notifications."
+      : isAndroid ? "On Android: tap the icon left of the address bar (or long-press the app icon \u203a App info) \u203a Notifications \u203a Allow."
+      : "Click the icon left of the address bar \u203a Site settings \u203a Notifications \u203a Allow, then reload.";
+    showDialog("Notifications are <em>blocked</em>", how, [{ label: "Got it" }]);
+  }
+
+  function onPill() {
+    if (busy) return;
+    var s = state();
+    if (s === "ios-install") {
+      showDialog("Add to Home Screen <em>first</em>",
+        "Apple only allows alerts from apps on your Home Screen (iOS 16.4 or newer). Add Magic City Nights to your Home Screen, open it from the new icon, then tap <b>Get alerts</b> there.",
+        [{ label: "Show me how", run: function () { if (window.mcnShowInstallHelp) window.mcnShowInstallHelp(); } }, { label: "Maybe later" }]);
+      return;
+    }
+    if (s === "blocked") { blockedHelp(); return; }
+    if (s === "on") { turnOff(); return; }
+    if (!configured()) {
+      showDialog("Same-night alerts are <em>almost here</em>",
+        "We\u2019re wiring up alerts for Birmingham shows happening tonight \u2014 Alabama Theatre, the Symphony, Alabama Ballet, Iron City and touring Broadway. Check back soon and tap <b>Get alerts</b> to turn them on.",
+        [{ label: "Sounds good" }]);
+      return;
+    }
+    turnOn();
+  }
+
+  function setBusy(b) { busy = b; if (pill) { if (b) pill.setAttribute("aria-busy", "true"); else pill.removeAttribute("aria-busy"); } }
+
+  function turnOn() {
+    if (!hasPush || !configured()) return Promise.resolve(false);
+    setBusy(true);
+    // Ask first, straight from the tap (iOS requires the permission prompt to come from a user gesture).
+    var ask = Notification.permission === "granted" ? Promise.resolve("granted") : new Promise(function (res) {
+      var p = Notification.requestPermission(res); if (p && p.then) p.then(res);
+    });
+    return ask.then(function (perm) {
+      if (perm !== "granted") { setBusy(false); paint(); if (perm === "denied") blockedHelp(); return false; }
+      var keyP = vapidKey() ? Promise.resolve(vapidKey()) : fetch(apiUrl() + "/vapid-public-key", { mode: "cors", credentials: "omit" })
+        .then(function (r) { if (!r.ok) throw new Error("key"); return r.json(); }).then(function (j) { return j.publicKey; });
+      return Promise.all([keyP, getReg()]).then(function (v) {
+        var key = v[0], reg = v[1];
+        if (!reg || !reg.pushManager) throw new Error("no service worker");
+        return reg.pushManager.getSubscription().then(function (old) {
+          return old ? old.unsubscribe().catch(function () {}) : null;
+        }).then(function () {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+        });
+      }).then(function (sub) {
+        return post("/subscribe", { subscription: sub.toJSON(), platform: platform() }).then(function () { return sub; }, function (err) {
+          return sub.unsubscribe().catch(function () {}).then(function () { throw err; });
+        });
+      }).then(function () {
+        lsSet(LS.on, "1"); lsSet(LS.sync, String(Date.now())); lsSet(LS.offer, String(Date.now()));
+        setBusy(false); paint(); hideOffer();
+        toast("\ud83d\udd14 Alerts ON \u2014 we\u2019ll ping you on show nights");
+        return true;
+      });
+    }).catch(function () {
+      setBusy(false); paint();
+      toast("Couldn\u2019t turn on alerts right now. Try again in a minute.");
+      return false;
+    });
+  }
+
+  function turnOff() {
+    setBusy(true);
+    return getReg().then(function (reg) { return reg && reg.pushManager ? reg.pushManager.getSubscription() : null; }).then(function (sub) {
+      if (!sub) return;
+      var ep = sub.endpoint;
+      return sub.unsubscribe().catch(function () {}).then(function () {
+        if (configured()) return post("/unsubscribe", { endpoint: ep }).catch(function () {});
+      });
+    }).catch(function () {}).then(function () {
+      lsSet(LS.on, null); setBusy(false); paint();
+      toast("\ud83d\udd15 Alerts off");
+    });
+  }
+
+  // Keep the pill honest (no network): if the browser dropped the subscription, show OFF.
+  // When on and connected, re-send the subscription at most once a day so the Worker never loses it.
+  function resync() {
+    if (!hasPush || lsGet(LS.on) !== "1" || !("serviceWorker" in nav)) return;
+    nav.serviceWorker.getRegistration().then(function (reg) {
+      if (!reg || !reg.pushManager) return;
+      return reg.pushManager.getSubscription().then(function (sub) {
+        if (!sub || Notification.permission !== "granted") { lsSet(LS.on, null); paint(); return; }
+        var last = +lsGet(LS.sync) || 0;
+        if (configured() && Date.now() - last > 864e5) {
+          post("/subscribe", { subscription: sub.toJSON(), platform: platform() }).then(function () { lsSet(LS.sync, String(Date.now())); }, function () {});
+        }
+      });
+    }).catch(function () {});
+  }
+
+  // ---------- after install: offer alerts once (only when the Worker is connected) ----------
+  function hideOffer() {
+    if (!offer) return;
+    var el = offer; offer = null;
+    el.classList.add("mcn-out"); setTimeout(function () { el.remove(); }, 300);
+  }
+  function maybeOffer() {
+    if (offer || !configured() || state() !== "off" || lsGet(LS.offer) || !document.body) return;
+    offer = document.createElement("div");
+    offer.className = "mcn-push-offer mcn-out"; offer.id = "mcn-push-offer";
+    offer.setAttribute("role", "region"); offer.setAttribute("aria-label", "Turn on event alerts");
+    offer.innerHTML = '<div class="mcn-po-txt"><b>\ud83d\udd14 Get show-night alerts?</b><span>A heads-up when a Birmingham show is happening tonight</span></div>' +
+      '<button type="button" class="mcn-po-on">Turn on</button><button type="button" class="mcn-po-x" aria-label="No thanks">\u00d7</button>';
+    document.body.appendChild(offer);
+    var el = offer;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.remove("mcn-out"); }); });
+    el.querySelector(".mcn-po-x").addEventListener("click", function () { lsSet(LS.offer, String(Date.now())); hideOffer(); });
+    el.querySelector(".mcn-po-on").addEventListener("click", function () { lsSet(LS.offer, String(Date.now())); hideOffer(); turnOn(); });
+  }
+
+  // ---------- deep link from a notification: /?view=events or #events ----------
+  function openEventsFromLink() {
+    var want = false;
+    try { want = new URLSearchParams(location.search).get("view") === "events" || location.hash === "#events"; } catch (e) {}
+    if (!want) return;
+    var tries = 0;
+    (function go() {
+      var btn = document.getElementById("events-open") || document.querySelector("[data-events]");
+      var view = document.getElementById("view-events");
+      if (btn && !(document.body.classList.contains("events-mode") || (view && !view.hidden))) btn.click();
+      else if (!btn && ++tries < 20) { setTimeout(go, 150); return; }
+      var target = view || btn;
+      if (target && target.scrollIntoView) setTimeout(function () { target.scrollIntoView({ block: "start" }); }, 60);
+    })();
+  }
+
+  function start() {
+    mountPill();
+    resync();
+    openEventsFromLink();
+    if (isStandalone()) setTimeout(maybeOffer, 1500);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+  window.addEventListener("appinstalled", function () { setTimeout(maybeOffer, 800); });
+  if (mq) {
+    var onMode = function () { paint(); if (mq.matches) setTimeout(maybeOffer, 800); };
+    if (mq.addEventListener) mq.addEventListener("change", onMode); else if (mq.addListener) mq.addListener(onMode);
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) paint(); });
+  window.mcnPush = { on: turnOn, off: turnOff, state: state, configured: configured };
+})();
+</script>
 </body></html>

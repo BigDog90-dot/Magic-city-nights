@@ -1,0 +1,15 @@
+{
+  "name": "mcn-push",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Magic City Nights same-night event push alerts (Cloudflare Worker, free tier, zero runtime dependencies)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "keys": "node scripts/generate-vapid.mjs",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "tail": "npx wrangler tail"
+  },
+  "engines": { "node": ">=18" }
+}
