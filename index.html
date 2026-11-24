@@ -396,6 +396,25 @@ body.shared #headline, body.shared #subline{display:none}
 .mood button.tn[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
 .mood button.tn[aria-pressed="true"] .onoff{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 @media (max-width:520px){.mood button.tn{grid-column:1/-1}}
+/* Hidden gems toggle (sits with the mood chips) and the gems panel */
+.mood button.gem[aria-pressed="true"]{background:var(--sel);border-color:var(--accent);color:var(--accent)}
+.mood button.gem[aria-pressed="true"] .onoff{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+@media (max-width:520px){.mood button.gem{grid-column:1/-1}}
+.gems{background:var(--surface);border:1.5px solid var(--accent);border-radius:20px;padding:16px;display:grid;gap:12px;min-width:0}
+.gems .gm-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gems .gm-head h2{font-family:var(--serif);font-weight:700;font-size:1.2rem}
+.gems .gm-head h2 em{font-style:normal;color:var(--accent)}
+.gems .gm-head .hint{margin-left:auto}
+.gems .gm-list{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.gems .gm-card{background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--c,var(--accent));border-radius:16px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.gems .gm-card b{font-family:var(--serif);font-size:1.05rem;line-height:1.25;overflow-wrap:anywhere}
+.gems .gm-card .meta{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.gems .gm-card .why{font-size:.92rem;line-height:1.45;overflow-wrap:anywhere}
+.gems .gm-card .open{font-size:.8rem;color:var(--accent);font-weight:700}
+.gems .gm-card .gm-links{display:flex;flex-wrap:wrap;gap:8px;padding-top:2px}
+.gems .gm-card .gm-links a{text-decoration:none;display:inline-flex;align-items:center}
+.gems .gm-more{justify-self:center}
+#sd-gem{color:var(--accent);font-weight:700;line-height:1.45}
 .tonight{background:var(--surface);border:1.5px solid var(--accent);border-radius:20px;padding:16px;display:grid;gap:10px}
 .tonight .tn-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .tonight .tn-head h2{font-family:var(--serif);font-weight:700;font-size:1.2rem}
@@ -413,7 +432,7 @@ body.shared #headline, body.shared #subline{display:none}
 .viewbar .seg button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-weight:700;font-size:.88rem;color:var(--muted)}
 .viewbar .seg button[aria-pressed="true"]{background:var(--sel);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .viewbar .hint{margin-left:auto}
-body.events-mode .wrap > :is(#viewbar,#tonight,#view-map){display:none !important}
+body.events-mode .wrap > :is(#viewbar,#tonight,#gems,#view-map){display:none !important}
 #view-map{display:grid;gap:8px}
 #view-map[hidden]{display:none !important}
 .map-shell{position:relative;height:clamp(420px,calc(100svh - 150px),780px);border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
@@ -495,8 +514,9 @@ body.map-open{overflow:hidden}
     <button data-mood="lowkey" aria-pressed="false">🕯️ Low key</button>
     <span class="sep" aria-hidden="true"></span>
     <button class="grown" id="grown-toggle" aria-pressed="false" aria-describedby="grown-hint">🍷 Grown &#38; sexy <span class="onoff" aria-hidden="true">OFF</span></button>
+    <button class="gem" id="gems-toggle" aria-pressed="false" aria-controls="gems">💎 Hidden gems <span class="onoff" aria-hidden="true">OFF</span></button>
     <button class="tn" id="tonight-toggle" aria-pressed="false" aria-controls="tonight">🌙 Open tonight <span class="onoff" aria-hidden="true">OFF</span></button>
-    <span class="grown-hint" id="grown-hint">On/off. Works with any mood.</span>
+    <span class="grown-hint" id="grown-hint">On/off. Works with any mood and with each other.</span>
   </section>
 
   <section class="search" id="search" role="search">
@@ -536,6 +556,7 @@ body.map-open{overflow:hidden}
   </div>
 
   <section id="tonight" class="tonight" hidden aria-live="polite" aria-label="Tonight"></section>
+  <section id="gems" class="gems" hidden aria-live="polite" aria-label="Hidden gems"></section>
 
   <section id="view-build" style="display:grid;gap:18px"></section>
 
@@ -654,6 +675,7 @@ Lounge name | $$$ | Downtown | low key | grown</pre>
     <span class="badge" id="sd-cat"></span><span class="soon" id="sd-soon" hidden>Opening soon</span>
     <h2 id="sd-name"></h2>
     <p class="hint" id="sd-meta"></p>
+    <p id="sd-gem" hidden></p>
     <p id="sd-note" hidden></p>
     <div class="links" id="sd-links"></div>
     <p class="hint" id="sd-fit"></p>
@@ -709,7 +731,7 @@ const SAMPLES = [
 
 /* Starter spots that closed for good, and the old values of starter spots that were renamed or moved.
    Browsers that saved the list earlier get these fixes on their next visit. */
-const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house", "s-highlands-bar-grill", "s-snooze", "s-msks-house-of-spice"];
+const STARTER_CLOSED = ["s-birmingham-stallions", "s-john-s-city-diner", "s-luxe-ultra-lounge", "s-rodney-scott-s-bbq", "s-wintzell-s-oyster-house", "s-highlands-bar-grill", "s-snooze", "s-msks-house-of-spice", "s-the-marble-ring"];
 const STARTER_OLD = {"s-bygones": {"note": "Cocktail bar in the Battery II building. Check hours before you go"}, "s-cassanova": {"name": "Cassanova Bar and Lounge", "address": "2312 1st Ave N", "area": "Downtown", "note": "Hookah, inventive drinks, photo spots. From a 2022 list, so check it's open"}, "s-dzire": {"name": "Dzire Bar and Lounge", "note": "Hookah lounge. Look it up before you go"}, "s-habitat-feed-social": {"note": "Rooftop at the Grand Bohemian Hotel. Reserve a sunset table"}, "s-high-dive": {"name": "High Dive"}, "s-jasmine-s-soul-food": {"name": "Jasmine's Soul Food"}, "s-k-j-s-elegant-pastries": {"area": "Downtown"}, "s-k1-speed": {"address": "5421 Beacon Dr"}, "s-mo-s-carriages-and-trail-rides": {"area": "McCalla"}, "s-obsidian": {"note": "Upscale cocktail and sushi lounge from Johin'na's owner, connected to Johin'na. Was aiming to open around October 2026, so check it's open", "address": "209 20th St N"}, "s-premiere-cinema-on-lakeshore": {"name": "Premiere Cinema on Lakeshore"}, "s-sips-n-strokes": {"name": "Sips n Strokes"}, "s-snapper-grabber-land-sea-market-cafe": {"name": "Snapper Grabber Land & Sea Market & Cafe"}, "s-the-alabama-biscuit-co": {"address": "4133 White Oak Dr", "area": "Crestline"}, "s-the-lodge": {"note": "Hidden speakeasy inside Fairway Social at Urban Supply by Railroad Park. Solve a coded message to find the door. Duckpin bowling, live music. Check it's open"}, "s-3000-bar": {"address": "1100 20th St S", "note": "Hookah, frozen drinks, lively crowd. From a 2022 list, so check it's open"}, "s-adam-and-eve-cafe": {"address": "1022 20th St S"}, "s-alabama-jazz-hall-of-fame": {"address": "1631 4th Ave N"}, "s-alicias-coffee": {"address": "1510 5th Ave N"}, "s-amc-dine-in-vestavia-hills-10": {"address": "1911 Kentucky Ave"}, "s-aria": {"address": "930 5th Ave N", "note": "VIP-style night with a dress code. From a 2022 list, so check it's open"}, "s-armour-house": {"address": "2309 1st Ave N, Ste 201"}, "s-bandit-patisserie": {"address": "2323 1st Ave N"}, "s-bar-sebastian": {"address": "120 16th St S", "note": "Hidden rooftop bar, you need the password. From a 2022 list, so check it's open"}, "s-barber-vintage-motorsports-museum": {"address": "6030 Barber Motorsports Pkwy"}, "s-bayonet": {"address": "2015 2nd Ave N"}, "s-bettola": {"address": "2930 3rd Ave S"}, "s-birmingham-civil-rights-institute": {"address": "520 16th St N"}, "s-birmingham-rage-room": {"address": "2616 7th Ave S"}, "s-birmingham-zoo": {"address": "2630 Cahaba Rd"}, "s-bottega-cafe": {"address": "2240 Highland Ave S"}, "s-bruto": {"address": "4420 4th Ave S"}, "s-burning-tree-bbq": {"address": "3090 3rd Ave S"}, "s-cala-coffee": {"address": "1826 3rd Ave N"}, "s-carlile-s-bbq": {"address": "3511 6th Ave S"}, "s-central-alabama-paintball-park": {"address": "55 Rosebud Ln, Calera"}, "s-classic-movie-at-the-alabama-theatre": {"address": "1817 3rd Ave N"}, "s-daysol-coffee-lab": {"address": "2616 3rd Ave S"}, "s-dreamland-bbq-southside": {"address": "1427 14th Ave S"}, "s-eden-lounge": {"address": "312 20th St S", "note": "Floral decor and a greenery wall. From a 2022 list, so check it's open"}, "s-eighty-eight": {"address": "2012 Magnolia Ave S", "note": "Piano bar with local musicians. From a 2022 list, so check it's open"}, "s-el-barrio": {"address": "2211 2nd Ave N"}, "s-filter-coffee-parlor": {"address": "1927 11th Ave S"}, "s-frothy-monkey": {"address": "2320 2nd Ave N"}, "s-gatos-and-beans": {"address": "4348 3rd Ct S"}, "s-house-of-found-objects": {"address": "2205 2nd Ave N"}, "s-jim-n-nick-s-five-points": {"address": "1908 11th Ave S"}, "s-johin-na": {"address": "2002 2nd Ave N"}, "s-june-coffee-co": {"address": "213 25th St N"}, "s-land-of-a-thousand-hills": {"address": "2173 Highland Ave"}, "s-live-show-at-iron-city": {"address": "513 22nd St S"}, "s-mcwane-science-center": {"address": "200 19th St N"}, "s-moon-shine-at-the-elyton-hotel": {"address": "1928 1st Ave N"}, "s-nightcap": {"address": "2225 2nd Ave N"}, "s-paper-doll": {"address": "2320 1st Ave N"}, "s-pilcrow-cocktail-cellar": {"address": "2015 1st Ave N"}, "s-pink-lantern": {"address": "2400 1st Ave N"}, "s-pogo": {"address": "2309 1st Ave N"}, "s-pottery-class-at-makebhm": {"address": "4000 3rd Ave S"}, "s-punch-love-coffee": {"address": "4000 3rd Ave S"}, "s-red-lion-lounge": {"note": "Old-school lounge with caricatures on the walls. Check it's open"}, "s-saw-s-soul-kitchen": {"address": "215 41st St S"}, "s-southern-museum-of-flight": {"address": "4343 73rd St N"}, "s-stained-glass-at-red-mountain-makers": {"address": "810 4th Ave N"}, "s-stardome-comedy-club": {"address": "1818 Data Dr"}, "s-sunset-at-vulcan-park": {"address": "1701 Valley View Dr"}, "s-the-daily-edition": {"address": "186 Oxmoor Rd"}, "s-the-escape-game-birmingham": {"address": "300 Summit Blvd, Ste 102"}, "s-the-humidor-room": {"address": "2115 7th Ave S", "note": "Premium cigars and Scotch. Moved from Hoover to Southside in late 2025, so check it's open"}, "s-the-marble-ring": {"address": "430 41st St S", "note": "1920s speakeasy. Go up the stairs to Hot Diggity Dogs and through the blue police call box. Check it's still open"}, "s-the-red-cat-at-railroad-park": {"address": "1701 1st Ave S"}, "s-the-roof-at-the-redmont-hotel": {"address": "2101 5th Ave N"}, "s-topgolf": {"address": "1111 24th St N"}, "s-walk-at-railroad-park": {"address": "1600 1st Ave S"}, "s-yo-mama-s": {"address": "2024 4th Ave N"}};
 // Booking links that moved from OpenTable to Resy: a phone that saved the old link gets the new one
 // (a link the person set themselves stays as is).
@@ -733,6 +755,9 @@ let locks = {date:{}, girls:{}, bars:{}, coffee:{}, brunch:{}, sun:{}};
 let tab = "build";
 let mood = "";
 let grown = false;
+let gemsOn = false, gemsAll = false;   // "Hidden gems" filter; the panel shows 8 picks until "Show all"
+const GEM = "hidden gem";
+const isGem = s => tagsOf(s).includes(GEM);
 let cuisines = [];   // food types picked; empty means all food
 let planEvents = {};   // outing -> {n: name, w: when, u: ticket link}
 let eventsOn = false, eventsFromPlan = false;
@@ -762,7 +787,7 @@ const MEAL_WORDS = {breakfast:"breakfast", brunch:"brunch", lunch:"lunch", dinne
 const mealsOf = s => Array.isArray(s.meals) ? s.meals.filter(m => MEAL_WORDS[m]) : [];
 const mealWord = s => { const m = mealsOf(s); return m.length ? m.map((w, i) => i ? w : w[0].toUpperCase() + w.slice(1)).join(", ") : ""; };
 const placeTags = s => tagsOf(s).filter(t => !DIET.includes(t) && t !== "all-vegan");
-const metaLine = s => [cuisineWord(s), dietWord(s), mealWord(s), ...placeTags(s).map(esc), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
+const metaLine = s => [cuisineWord(s), dietWord(s), mealWord(s), ...placeTags(s).map(t => t === "hidden gem" ? "💎 hidden gem" : esc(t)), money(s.price), s.area ? esc(s.area) : "", s.setting && s.setting !== "both" ? s.setting : "", dressWord(s.dress), moodWord(s.mood), s.grown ? "grown & sexy" : ""].filter(Boolean).join(" · ");
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
 const lookUp = s => "https://www.google.com/search?q=" + encodeURIComponent(`${s.name} ${s.area || ""} Birmingham AL`);
 const nameLink = s => `<a class="name" href="${esc(safeUrl(s.website) || lookUp(s))}" target="_blank" rel="noopener">${esc(s.name)}</a>`;
@@ -781,10 +806,11 @@ try {
   if (s.tab) tab = s.tab;
   if (s.mood === "social" || s.mood === "lowkey") mood = s.mood;
   grown = !!s.grown;
+  gemsOn = !!s.gems;
   if (Array.isArray(s.cuisines)) cuisines = s.cuisines.filter(k => CUISINES[k]);
   if (s.planEvents && typeof s.planEvents === "object") planEvents = s.planEvents;
 } catch(e) {}
-function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, cuisines, planEvents})); } catch(e) {} }
+function remember(){ try { localStorage.setItem("bdb-ui2", JSON.stringify({picks, locks, outing, tab, mood, grown, gems:gemsOn, cuisines, planEvents})); } catch(e) {} }
 
 function filters(){ return { budget:Number($("#f-budget").value), area:$("#f-area").value, setting:$("#f-setting").value, dress:$("#f-dress").value }; }
 // Food type chips. As a restaurant (its category or an "also" stop), a spot must match a picked chip by cuisine or tag.
@@ -816,6 +842,7 @@ function passes(s, cats, slot){
   if (f.dress && s.dress && s.dress !== "both" && s.dress !== f.dress) return false;
   if (mood && s.mood && s.mood !== "both" && s.mood !== mood) return false;
   if (grown && !s.grown) return false;
+  if (gemsOn && !isGem(s)) return false;
   if (!cuisineOk(s, Array.isArray(cats) ? cats : null)) return false;
   if (tonight && !openTonight(s)) return false;
   return true;
@@ -846,6 +873,8 @@ function renderHeader(){
   document.querySelectorAll("[data-mood]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mood === mood));
   $("#grown-toggle").setAttribute("aria-pressed", grown);
   $("#grown-toggle .onoff").textContent = grown ? "ON" : "OFF";
+  $("#gems-toggle").setAttribute("aria-pressed", gemsOn);
+  $("#gems-toggle .onoff").textContent = gemsOn ? "ON" : "OFF";
   $("#tonight-toggle").setAttribute("aria-pressed", tonight);
   $("#tonight-toggle .onoff").textContent = tonight ? "ON" : "OFF";
 }
@@ -992,7 +1021,7 @@ function render(){
     $("#feedback-home").hidden = tab === "spots";
     $("#view-events").hidden = !eventsOn;
     renderHeader(); renderCuisines(); renderAreas(); renderBuild(); renderPlan(); renderSpots(); renderSaved();
-    renderTonight(); renderMapView();
+    renderTonight(); renderGems(); renderMapView();
     if (eventsOn) renderEvents();
   });
   remember();
@@ -1069,7 +1098,7 @@ const norm = v => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLow
 function haystack(s){
   const c = CATS[s.category] || {};
   const extra = (Array.isArray(s.also) ? s.also : []).map(k => CATS[k] ? `${CATS[k].label} ${CATS[k].plural}` : "").join(" ");
-  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "chinese" ? "chinese asian" + (tagsOf(s).includes("szechuan") ? " sichuan szechwan" : "") + (tagsOf(s).includes("dim sum") ? " dumplings" : "") : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), mealsOf(s).join(" "), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", s.setting !== "both" ? s.setting : ""].join(" | "));
+  return norm([s.name, s.area, c.label, c.plural, extra, s.soon ? "opening soon new" : "", cuisineWord(s), s.cuisine === "asian" ? "japanese sushi hibachi ramen" : s.cuisine === "chinese" ? "chinese asian" + (tagsOf(s).includes("szechuan") ? " sichuan szechwan" : "") + (tagsOf(s).includes("dim sum") ? " dumplings" : "") : s.cuisine === "bbq" ? "barbecue bar-b-q bbq ribs" : "", dietWord(s), mealsOf(s).join(" "), placeTags(s).join(" "), foodKeys(s).includes("vegan") ? "vegan plant-based plant based" : "", foodKeys(s).includes("health") ? "healthy health salad smoothie juice bowl" : "", s.note, moodWord(s.mood), dressWord(s.dress), s.grown ? "grown & sexy" : "", isGem(s) ? "hidden gem hidden gems gem secret off the radar hole in the wall " + (s.gem || "") : "", s.setting !== "both" ? s.setting : ""].join(" | "));
 }
 function searchSpots(query){
   const words = norm(query).split(/\s+/).filter(Boolean);
@@ -1125,6 +1154,7 @@ function openSpotDetail(id){
   $("#sd-name").textContent = s.name;
   $("#sd-soon").hidden = !s.soon;
   $("#sd-meta").innerHTML = metaLine(s) + (s.address ? ` · ${esc(s.address)}` : "");
+  $("#sd-gem").hidden = !(isGem(s) && s.gem); $("#sd-gem").textContent = isGem(s) && s.gem ? `💎 Why it's a gem: ${s.gem}` : "";
   $("#sd-note").hidden = !s.note; $("#sd-note").textContent = s.note || "";
   const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
   $("#sd-links").innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a>${linkRow(s)}`;
@@ -1435,6 +1465,23 @@ $("#ev-form").addEventListener("submit", e => {
    A spot counts if it's open for at least 30 minutes between now (or 5 PM, if that's later) and 3 AM. Birmingham time.
    Hours format: "Mo-Fr 17:00-22:00; Sa 17:00-01:00". Days not listed are closed. "eve" = open in the evening, time unknown. */
 const NIGHT_HOURS = {
+  // Hidden gems (added Nov 24, 2026; hours from each spot's own site, Bham Now and Google/Yelp listings):
+  "s-the-garage-cafe": "We-Th 11:00-23:00; Fr-Sa 11:00-02:00; Su 12:00-22:00",
+  "s-lucky-stranger": "Mo-Th 16:00-24:00; Fr 16:00-02:00; Sa 12:00-02:00; Su 12:00-24:00",
+  "s-nikis-west": "Mo-Fr 10:30-17:00",
+  "s-ruscellis-mojo": "Tu-Th 21:00-02:00; Fr-Sa 17:00-02:00; Su 17:00-24:00",
+  "s-valhalla-board-game-cafe": "Mo-Th 10:00-22:00; Fr 10:00-23:00; Sa 07:00-23:00; Su 07:00-22:00",
+  "s-green-acres-cafe": "Mo-We 09:00-21:45; Th-Sa 09:00-22:45",
+  "s-salems-diner": "Mo-Sa 06:30-13:00",
+  "s-irondale-cafe": "Mo-Fr,Su 11:00-14:30",
+  "s-marielos-pupuseria": "Mo-Fr 10:00-20:00; Sa 11:00-20:00",
+  "s-giuseppes-cafe": "Mo-Th 11:00-21:30; Fr 11:00-22:00; Sa 16:00-22:00",
+  "s-jj-grocery-deli": "Mo-Sa 05:30-14:00",
+  "s-tonys-hot-dogs": "Mo-Fr 05:30-15:00; Sa 06:30-15:00",
+  "s-los-valedores": "Mo-Tu 10:30-21:00; We-Th 10:30-22:00; Fr-Sa 10:30-23:00; Su 12:00-22:00",
+  "s-house-eleven": "Tu 07:00-15:00; We-Th 07:00-22:00; Fr 07:00-24:00; Sa 08:00-24:00; Su 08:00-19:00",
+  "s-noble-pursuits": "Mo-Su 11:00-22:00",
+  "s-lous-pub": "Mo-Th,Su 15:00-21:00; Fr-Sa 15:00-24:00",
   // Hours checked Nov 23, 2026 on each spot's own site or its current listings.
   // Vegan and health spots (added Nov 23, 2026):
   "s-aww-shucks": "Mo-Fr 11:00-17:30",
@@ -1698,6 +1745,31 @@ function renderTonight(){
     <p class="hint">A best guess from listed hours and closed days. Hours can change, so check before you go.</p>${evHtml}`;
 }
 
+/* ---------- hidden gems: off-the-radar spots tagged "hidden gem" in spots.json ---------- */
+// With the toggle on, every list keeps only gems and this panel lists them with why each one is a gem.
+// It follows the other filters (budget, area, mood, Grown & sexy, food type, Open tonight).
+function renderGems(){
+  const box = $("#gems");
+  box.hidden = !gemsOn || tab === "spots";
+  if (box.hidden) { box.innerHTML = ""; return; }
+  const list = spots.filter(s => isGem(s) && passes(s)).sort((a, b) => soonLast(a, b) || a.name.localeCompare(b.name));
+  const total = spots.filter(isGem).length;
+  const shown = gemsAll ? list : list.slice(0, 8);
+  const card = s => {
+    const q = encodeURIComponent(`${s.name} ${s.address || s.area || ""} Birmingham AL`);
+    const line = tonight ? tonightLine(s) : "";
+    return `<article class="gm-card" style="--c:${color(s.category)}"><b>${esc(s.name)}</b>${soonTag(s)}
+      <span class="meta">${[CATS[s.category] ? CATS[s.category].label : "", s.area ? esc(s.area) : "", money(s.price)].filter(Boolean).join(" · ")}</span>
+      <span class="why">${esc(s.gem || s.note || "")}</span>${line ? `<span class="open">${esc(line)}</span>` : ""}
+      <div class="gm-links"><button type="button" class="btn primary small" data-qpick="${esc(s.id)}">Details &#38; add</button>
+      <a class="btn ghost small" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions ↗</a></div></article>`;
+  };
+  box.innerHTML = `<div class="gm-head"><h2>💎 Hidden <em>gems</em></h2><span class="hint">${list.length === total ? `${total} off-the-radar spots` : `${list.length} of ${total} match your filters`}</span></div>
+    <p class="hint">Back-alley bars, counters inside markets and gas stations, and local secrets. Every list below now shows only gems. Hours can change, so check before you go.</p>
+    ${list.length ? `<div class="gm-list">${shown.map(card).join("")}</div>${list.length > shown.length ? `<button type="button" class="btn ghost small gm-more" data-gems-all>Show all ${list.length} gems</button>` : ""}`
+      : `<p class="hint">No gems match these filters. Try another area or price, or turn off Open tonight.</p>`}`;
+}
+
 /* ---------- map view: Leaflet, loaded the first time someone opens the map ---------- */
 const LEAFLET = {
   css:{href:"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", integrity:"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="},
@@ -1788,6 +1860,8 @@ function setMapFull(on){
 document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
   if (t.id === "tonight-toggle") { tonight = !tonight; render(); return; }
+  if (t.id === "gems-toggle") { gemsOn = !gemsOn; gemsAll = false; render(); return; }
+  if (t.dataset.gemsAll !== undefined) { gemsAll = true; render(); return; }
   if (t.dataset.view) { viewMode = t.dataset.view === "map" ? "map" : "list"; render(); return; }
   if (t.id === "map-fs") { setMapFull(!$("#map-shell").classList.contains("full")); return; }
   if (t.dataset.tonightEvents !== undefined) { openEvents(false); return; }
@@ -1802,7 +1876,7 @@ setInterval(() => { if (tonight && !document.hidden) render(); }, 5 * 60 * 1000)
 // rails scrolled to the start. Picked plans and saved spots stay put. landOnDate() runs after the spring settles.
 function resetEverything(){
   const smooth = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  mood = ""; grown = false; cuisines = []; tonight = false;
+  mood = ""; grown = false; gemsOn = false; gemsAll = false; cuisines = []; tonight = false;
   outing = "date"; tab = "build"; viewMode = "list"; eventsOn = false; eventsFromPlan = false; sgOpen = false; editing = null;
   $("#f-budget").value = "4"; $("#f-area").value = ""; $("#f-setting").value = ""; $("#f-dress").value = "";
   $("#q").value = ""; if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -2175,7 +2249,7 @@ render();
           let changed = false;
           for (const sp of spots) {
             const f = fresh.get(sp.id); if (!f) continue;
-            for (const k of ["website","reserve","address","area","cuisine","lat","lng","closed"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
+            for (const k of ["website","reserve","address","area","cuisine","lat","lng","closed","gem"]) if (!sp[k] && f[k]) { sp[k] = f[k]; changed = true; }
             if (f.cuisine && sp.cuisine !== f.cuisine) { sp.cuisine = f.cuisine; changed = true; }
             // Diet tags (vegan, health) and extra stop types come from the starter list.
             if (Array.isArray(f.tags) && JSON.stringify(sp.tags || []) !== JSON.stringify(f.tags)) { sp.tags = [...f.tags]; changed = true; }
