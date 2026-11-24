@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.json">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Magic City Nights">
 <meta property="og:locale" content="en_US">
@@ -2357,48 +2357,187 @@ $("#a-cat").addEventListener("change", syncCuisineField); syncCuisineField();
 </script>
 
 <script data-goatcounter="https://mcn.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-<!-- PWA: service worker registration + install button (kept separate from app logic) -->
+<!-- PWA: service worker registration + smart Install App button (Android prompt / iPhone + iPad Add to Home Screen guide). Kept separate from app logic. -->
+<style>
+.mcn-inst{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:1000;max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 8px 10px 10px;background:#16213A;color:#F5F1E8;border:1px solid #2A3654;border-top:1px solid rgb(212 175 55 / .45);border-radius:18px;box-shadow:0 14px 34px rgb(0 0 0 / .5),0 0 0 1px rgb(212 175 55 / .08);font-family:var(--body);box-sizing:border-box;transform:translateY(0);opacity:1;transition:transform .28s ease,opacity .28s ease}
+.mcn-inst[hidden]{display:none}
+.mcn-inst.mcn-out{transform:translateY(calc(100% + 24px));opacity:0}
+.mcn-inst-ico{flex:0 0 auto;width:42px;height:42px;border-radius:11px;border:1px solid rgb(212 175 55 / .5);display:block;object-fit:cover}
+.mcn-inst-txt{flex:1 1 auto;min-width:0;display:grid;gap:1px;line-height:1.2}
+.mcn-inst-txt b{font-family:var(--display);font-weight:700;font-size:.98rem;color:#F5F1E8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcn-inst-txt span{font-size:.8rem;color:#A9B0C2;overflow-wrap:anywhere}
+.mcn-inst-btn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 15px;border:0;border-radius:999px;background:#D4AF37;color:#0B1426;font-family:var(--display);font-weight:800;font-size:.9rem;letter-spacing:.02em;cursor:pointer;box-shadow:0 4px 14px rgb(212 175 55 / .28);white-space:nowrap}
+.mcn-inst-btn svg{width:16px;height:16px;flex:0 0 auto}
+.mcn-inst-btn:focus-visible,.mcn-inst-x:focus-visible,.mcn-ios button:focus-visible{outline:2px solid #F5F1E8;outline-offset:2px}
+.mcn-inst-x{flex:0 0 auto;width:36px;height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:#A9B0C2;font-size:1.35rem;line-height:1;cursor:pointer;border-radius:10px;padding:0}
+@media (max-width:359px){.mcn-inst-txt span{display:none}}
+body.mcn-has-inst{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body.mcn-has-inst .toast{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+body:has(.map-shell.full) .mcn-inst{display:none}
+dialog.mcn-ios{border:1px solid #2A3654;border-top:2px solid #D4AF37;background:#16213A;color:#F5F1E8;border-radius:22px;padding:20px 18px calc(16px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100% - 24px));max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;box-sizing:border-box;box-shadow:0 24px 60px rgb(0 0 0 / .6);font-family:var(--body)}
+dialog.mcn-ios::backdrop{background:rgb(5 10 20 / .78)}
+.mcn-ios-head{display:flex;align-items:center;gap:12px;padding-right:34px}
+.mcn-ios-head img{width:48px;height:48px;border-radius:12px;border:1px solid rgb(212 175 55 / .5);flex:0 0 auto}
+.mcn-ios h2{margin:0;font-family:var(--display);font-weight:700;font-size:1.3rem;line-height:1.15}
+.mcn-ios h2 em{font-style:normal;color:#D4AF37}
+.mcn-ios-lead{margin:12px 0 14px;color:#A9B0C2;font-size:.93rem;line-height:1.45}
+.mcn-ios-close{position:absolute;top:12px;right:12px;width:40px;height:40px;border:1px solid #2A3654;border-radius:999px;background:#0B1426;color:#F5F1E8;font-size:1.25rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.mcn-ios-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:mcnstep}
+.mcn-ios-steps li{display:flex;align-items:center;gap:12px;background:#0B1426;border:1px solid #2A3654;border-radius:14px;padding:11px 12px;font-size:.95rem;line-height:1.4;counter-increment:mcnstep}
+.mcn-ios-steps li::before{content:counter(mcnstep);flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#D4AF37;color:#0B1426;font-family:var(--display);font-weight:800;font-size:.85rem;display:inline-flex;align-items:center;justify-content:center}
+.mcn-ios-steps .mcn-ios-glyph{flex:0 0 auto;width:38px;height:38px;border-radius:10px;background:#16213A;border:1px solid #2A3654;display:inline-flex;align-items:center;justify-content:center;color:#4FA3E8}
+.mcn-ios-steps .mcn-ios-glyph svg{width:22px;height:22px}
+.mcn-ios-steps b{color:#F5F1E8}
+.mcn-ios-steps small{display:block;color:#A9B0C2;font-size:.8rem}
+.mcn-ios-bar{margin:14px 0 4px;display:flex;justify-content:space-around;align-items:center;background:#0B1426;border:1px solid #2A3654;border-radius:14px;padding:8px 6px;color:#4FA3E8}
+.mcn-ios-bar svg{width:22px;height:22px;display:block}
+.mcn-ios-bar .mcn-ios-hit{position:relative;display:inline-flex;padding:6px;border-radius:999px;box-shadow:0 0 0 2px #D4AF37;animation:mcnpulse 1.6s ease-in-out infinite}
+.mcn-ios-bar .mcn-ios-dim{opacity:.45}
+.mcn-ios-cap{text-align:center;color:#A9B0C2;font-size:.78rem;margin:0 0 12px}
+.mcn-ios-note{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#2A2410;border:1px solid rgb(212 175 55 / .4);color:#F5F1E8;font-size:.87rem;line-height:1.4}
+.mcn-ios-note[hidden]{display:none}
+.mcn-ios-done{margin-top:14px;width:100%;min-height:48px;border:0;border-radius:999px;background:#D4AF37;color:#0B1426;font-family:var(--display);font-weight:800;font-size:1rem;cursor:pointer}
+@keyframes mcnpulse{0%,100%{box-shadow:0 0 0 2px #D4AF37}50%{box-shadow:0 0 0 5px rgb(212 175 55 / .35)}}
+@media (prefers-reduced-motion:reduce){.mcn-inst{transition:none}.mcn-ios-bar .mcn-ios-hit{animation:none}}
+</style>
 <script>
 (function () {
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/sw.js").catch(function () {});
+  var nav = window.navigator, ua = nav.userAgent || "";
+  var isIOS = (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) && !window.MSStream;
+  var isAndroid = /Android/i.test(ua);
+  var isIPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1);
+  var notSafari = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|Instagram|FBAN|FBAV|FB_IAB|Line\/|Twitter|Snapchat|LinkedInApp|Pinterest/i.test(ua);
+  var mq = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
+  function isStandalone() { return nav.standalone === true || !!(mq && mq.matches); }
+
+  // Service worker: HTTPS (or localhost for testing) only.
+  if ("serviceWorker" in nav && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+    window.addEventListener("load", function () { nav.serviceWorker.register("/sw.js").catch(function () {}); });
+  }
+
+  var KEY = "mcn-install-dismissed", SNOOZE = 30 * 24 * 60 * 60 * 1000;
+  function dismissedRecently() {
+    try {
+      var v = localStorage.getItem(KEY); if (!v) return false;
+      var t = Number(v);
+      if (!isFinite(t) || t < 1e12) { localStorage.setItem(KEY, String(Date.now())); return true; } // older "1" flag: treat as just dismissed
+      return Date.now() - t < SNOOZE;
+    } catch (err) { return false; }
+  }
+  function rememberDismiss() { try { localStorage.setItem(KEY, String(Date.now())); } catch (err) {} }
+
+  var DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5 12 15.5 17 10.5"/><path d="M5 20h14"/></svg>';
+  var SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 9.5H7a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7.5a2 2 0 0 0-2-2h-1.5"/><path d="M12 14.5V2.8"/><path d="M8.2 6.3 12 2.5l3.8 3.8"/></svg>';
+  var PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>';
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+  var BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>';
+  var FWD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+  var BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg>';
+  var TABS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="13" height="13" rx="2.5"/><path d="M7.5 7.5V5.5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>';
+
+  var bar = null, modal = null, deferredPrompt = null;
+
+  function hideBar(remember) {
+    if (remember) rememberDismiss();
+    if (!bar) return;
+    var el = bar; bar = null;
+    document.body.classList.remove("mcn-has-inst");
+    el.classList.add("mcn-out");
+    setTimeout(function () { el.remove(); }, 300);
+  }
+
+  function showBar(mode) {
+    if (bar || isStandalone() || dismissedRecently() || !document.body) return;
+    bar = document.createElement("div");
+    bar.className = "mcn-inst mcn-out";
+    bar.id = "mcn-install";
+    bar.setAttribute("role", "region");
+    bar.setAttribute("aria-label", "Install Magic City Nights");
+    bar.dataset.mode = mode;
+    bar.innerHTML = '<img class="mcn-inst-ico" src="/icons/icon-192.png" width="42" height="42" alt="">' +
+      '<div class="mcn-inst-txt"><b>Get the app</b><span>' + (mode === "ios" ? "Add Magic City Nights to your Home Screen" : "One-tap Magic City Nights plans, full-screen") + '</span></div>' +
+      '<button type="button" class="mcn-inst-btn" id="mcn-install-btn" aria-label="Install App' + (mode === "ios" ? ': show Add to Home Screen steps' : '') + '">' + DL + 'Install App</button>' +
+      '<button type="button" class="mcn-inst-x" id="mcn-install-x" aria-label="Dismiss install prompt">\u00d7</button>';
+    document.body.appendChild(bar);
+    document.body.classList.add("mcn-has-inst");
+    var el = bar;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.remove("mcn-out"); }); });
+    el.querySelector("#mcn-install-x").addEventListener("click", function () { hideBar(true); });
+    el.querySelector("#mcn-install-btn").addEventListener("click", function () {
+      if (mode === "ios") { openIOSGuide(); return; }
+      promptAndroid();
     });
   }
-  var KEY = "mcn-install-dismissed";
-  var deferred = null, wrap = null;
-  function hide() { if (wrap) { wrap.remove(); wrap = null; } }
-  window.addEventListener("beforeinstallprompt", function (e) {
-    e.preventDefault();
-    deferred = e;
-    try { if (localStorage.getItem(KEY)) return; } catch (err) {}
-    if (wrap || !document.body) return;
-    wrap = document.createElement("div");
-    wrap.setAttribute("role", "region");
-    wrap.setAttribute("aria-label", "Install app");
-    wrap.style.cssText = "position:fixed;right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:center;gap:2px;background:#16213A;border:1px solid #2A3654;border-radius:999px;padding:4px;box-shadow:0 8px 22px rgb(0 0 0 / .4);font:inherit";
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = "Install app";
-    btn.style.cssText = "background:#D4AF37;color:#0B1426;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;font-size:.85rem;cursor:pointer";
-    var x = document.createElement("button");
-    x.type = "button";
-    x.setAttribute("aria-label", "Dismiss");
-    x.textContent = "\u00d7";
-    x.style.cssText = "background:none;color:#A9B0C2;border:0;padding:4px 10px;font-size:1.1rem;line-height:1;cursor:pointer";
-    btn.addEventListener("click", function () {
-      if (!deferred) return hide();
-      deferred.prompt();
-      deferred.userChoice.finally(function () { deferred = null; hide(); });
+
+  // ---- Android / Chromium: native install prompt ----
+  function promptAndroid() {
+    var dp = deferredPrompt;
+    if (!dp) { hideBar(false); return; }
+    deferredPrompt = null;
+    Promise.resolve().then(function () { return dp.prompt(); }).then(function () { return dp.userChoice; }).then(function (choice) {
+      if (choice && choice.outcome === "dismissed") hideBar(true); else hideBar(false);
+    }).catch(function () { hideBar(false); });
+  }
+
+  if (!isIOS) {
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (isStandalone()) return;
+      if (document.body) showBar("android");
+      else document.addEventListener("DOMContentLoaded", function () { showBar("android"); });
     });
-    x.addEventListener("click", function () {
-      try { localStorage.setItem(KEY, "1"); } catch (err) {}
-      hide();
+  }
+  window.addEventListener("appinstalled", function () { deferredPrompt = null; hideBar(false); });
+  if (mq) {
+    var onMode = function () { if (mq.matches) { hideBar(false); if (modal && modal.open) modal.close(); } };
+    if (mq.addEventListener) mq.addEventListener("change", onMode); else if (mq.addListener) mq.addListener(onMode);
+  }
+
+  // ---- iPhone / iPad: Safari has no install prompt, so walk through Share > Add to Home Screen ----
+  function buildIOSGuide() {
+    modal = document.createElement("dialog");
+    modal.className = "mcn-ios";
+    modal.id = "mcn-ios-guide";
+    modal.setAttribute("aria-labelledby", "mcn-ios-title");
+    modal.setAttribute("aria-describedby", "mcn-ios-lead");
+    var where = isIPad ? "at the top right of Safari" : "in Safari\u2019s bottom toolbar";
+    modal.innerHTML =
+      '<button type="button" class="mcn-ios-close" aria-label="Close install steps">\u00d7</button>' +
+      '<div class="mcn-ios-head"><img src="/icons/icon-192.png" width="48" height="48" alt=""><h2 id="mcn-ios-title">Add to your <em>Home Screen</em></h2></div>' +
+      '<p class="mcn-ios-lead" id="mcn-ios-lead">Apple doesn\u2019t allow one-tap installs, but it only takes a few taps in Safari to get Magic City Nights full-screen, right next to your other apps.</p>' +
+      '<div class="mcn-ios-bar" aria-hidden="true"><span class="mcn-ios-dim">' + BACK + '</span><span class="mcn-ios-dim">' + FWD + '</span><span class="mcn-ios-hit">' + SHARE + '</span><span class="mcn-ios-dim">' + BOOK + '</span><span class="mcn-ios-dim">' + TABS + '</span></div>' +
+      '<p class="mcn-ios-cap">Look for the Share button ' + where + '</p>' +
+      '<ol class="mcn-ios-steps">' +
+        '<li><span class="mcn-ios-glyph">' + SHARE + '</span><span>Tap the <b>Share</b> button<small>The square with an arrow pointing up' + (isIPad ? "" : " (tap \u2022\u2022\u2022 first if you don\u2019t see it)") + '</small></span></li>' +
+        '<li><span class="mcn-ios-glyph">' + PLUS + '</span><span>Scroll down and tap <b>Add to Home Screen</b><small>You may need to tap \u201cView More\u201d to find it</small></span></li>' +
+        '<li><span class="mcn-ios-glyph">' + CHECK + '</span><span>Tap <b>Add</b><small>Open Magic City Nights from your Home Screen like any app</small></span></li>' +
+      '</ol>' +
+      '<p class="mcn-ios-note"' + (notSafari ? "" : " hidden") + '><b>Opened in Chrome, Instagram or another app?</b> Open magiccitynights.com in <b>Safari</b> first, then follow these steps.</p>' +
+      '<button type="button" class="mcn-ios-done">Got it</button>';
+    document.body.appendChild(modal);
+    modal.querySelector(".mcn-ios-close").addEventListener("click", function () { modal.close(); });
+    modal.querySelector(".mcn-ios-done").addEventListener("click", function () { modal.close(); hideBar(true); });
+    // Tap outside the panel closes it. Escape is handled by the native dialog.
+    modal.addEventListener("click", function (e) {
+      if (e.target !== modal) return;
+      var r = modal.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) modal.close();
     });
-    wrap.appendChild(btn); wrap.appendChild(x);
-    document.body.appendChild(wrap);
-  });
-  window.addEventListener("appinstalled", function () { deferred = null; hide(); });
+    modal.addEventListener("close", function () { var b = document.getElementById("mcn-install-btn"); if (b) b.focus({ preventScroll: true }); });
+  }
+  function openIOSGuide() {
+    if (isStandalone()) return;
+    if (!modal) buildIOSGuide();
+    if (modal.open) return;
+    if (typeof modal.showModal === "function") modal.showModal(); else modal.setAttribute("open", "");
+  }
+  window.mcnShowInstallHelp = openIOSGuide;
+
+  if (isIOS && !isStandalone()) {
+    var startIOS = function () { setTimeout(function () { showBar("ios"); }, 1200); };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startIOS); else startIOS();
+  }
 })();
 </script>
 <script>

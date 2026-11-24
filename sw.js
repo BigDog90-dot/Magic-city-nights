@@ -1,9 +1,10 @@
 /* Magic City Nights service worker: basic offline support.
    - Pages (navigations, incl. ?plan= share links) and spots.json: network-first, cache fallback.
-   - Same-origin static assets (icons, images, manifest): cache-first.
+   - Manifests (manifest.json, manifest.webmanifest): network-first, cache fallback.
+   - Same-origin static assets (icons, images): cache-first.
    - Google Fonts: stale-while-revalidate.
    - Everything else cross-origin (Kit, GoatCounter, ticket APIs, etc.) is left alone. */
-const VERSION = "mcn-v1";
+const VERSION = "mcn-v2"; // bump to clear old caches when this file changes
 const CACHE = VERSION + "-core";
 const FONT_CACHE = VERSION + "-fonts";
 
@@ -11,6 +12,7 @@ const CORE = [
   "/",
   "/index.html",
   "/spots.json",
+  "/manifest.json",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -106,7 +108,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Spot data and the manifest change over time: fresh when online, cached copy when offline.
-  if (url.pathname === "/spots.json" || url.pathname === "/manifest.webmanifest") {
+  if (url.pathname === "/spots.json" || url.pathname === "/manifest.json" || url.pathname === "/manifest.webmanifest") {
     event.respondWith(networkFirst(request, url.pathname));
     return;
   }
