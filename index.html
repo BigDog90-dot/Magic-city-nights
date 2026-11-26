@@ -1075,7 +1075,16 @@ function keepView(fn){
 /* Show the email signup card only once Kit's form is actually on the page (an ad blocker can stop it). */
 (() => {
   const box = $("#signup"); if (!box) return;
-  const check = () => { if (box.querySelector(".formkit-form, form")) { box.classList.add("ready"); return true; } return false; };
+  /* Optional first name, sent to Kit as fields[first_name] so newsletters can greet people by name. Kit's own script posts every field in the form. */
+  const addFirstName = form => {
+    if (!form || form.querySelector('[name="fields[first_name]"]')) return;
+    const email = form.querySelector('[name="email_address"]'); const emailField = email && email.closest(".formkit-field"); if (!emailField) return;
+    const f = document.createElement("div"); f.className = "formkit-field";
+    const i = document.createElement("input"); i.className = "formkit-input"; i.name = "fields[first_name]"; i.type = "text";
+    i.autocomplete = "given-name"; i.maxLength = 60; i.placeholder = "First name (optional)"; i.setAttribute("aria-label", "First name (optional)");
+    f.appendChild(i); emailField.parentNode.insertBefore(f, emailField);
+  };
+  const check = () => { const form = box.querySelector(".formkit-form, form"); if (form) { addFirstName(form); box.classList.add("ready"); return true; } return false; };
   if (!check()) { const mo = new MutationObserver(() => { if (check()) mo.disconnect(); }); mo.observe(box, {childList:true, subtree:true}); }
 })();
 
