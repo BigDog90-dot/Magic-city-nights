@@ -348,7 +348,8 @@
    "category": "comedy",
    "price": null,
    "note": "Christmas-themed comedy special hosted by MJ Da Producer, presented by Bosses Lounge and Drew2Funny. Drew2Funny (presenting), Eugene and Miles Brison. Doors 7 PM. Tickets may be available at the door or via Bosses Lounge.",
-   "url": null
+   "url": null,
+   "featured": true
   },
   {
    "id": "ev-acta-wonderful-life-2026-12-06",
