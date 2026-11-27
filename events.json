@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24",
+ "updated": "2026-11-27",
  "timezone": "America/Chicago",
  "about": "Magic City Nights dated events. date is the Central-time show date; startTime/endTime are 24-hour Central time (endTime earlier than startTime means after midnight). Runs with no show time use date + endDate. calendars are calendar-only listings with no published date.",
  "events": [
@@ -333,6 +333,22 @@
    "price": null,
    "note": "All ages, standing room. Doors 7 PM.",
    "url": "https://ironcitybham.com/event/in-color/"
+  },
+  {
+   "id": "ev-tis-the-season-comedy-special-2026-12-05",
+   "series": "tis-the-season-comedy-special",
+   "title": "Tis The Season Comedy Special",
+   "venue": "Bosses Private Lounge",
+   "address": "201 Richard Arrington Jr Blvd S, Birmingham, AL 35233",
+   "area": "Southside",
+   "date": "2026-12-05",
+   "startTime": "20:30",
+   "endTime": "22:30",
+   "timeLabel": "Sat, Dec 5 · 8:30 PM",
+   "category": "comedy",
+   "price": null,
+   "note": "Christmas-themed comedy special hosted by MJ Da Producer, presented by Bosses Lounge and Drew2Funny. Drew2Funny (presenting), Eugene and Miles Brison. Doors 7 PM. Tickets may be available at the door or via Bosses Lounge.",
+   "url": null
   },
   {
    "id": "ev-acta-wonderful-life-2026-12-06",
